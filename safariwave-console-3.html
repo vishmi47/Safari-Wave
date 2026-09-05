@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafariWave — Expedition Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal: #0F3B3B;
+    --teal-dark: #081F1F;
+    --teal-mid: #164F4F;
+    --sand: #E8DCC8;
+    --sand-light: #F6F0E4;
+    --coral: #DC6A3F;
+    --coral-dark: #B94F29;
+    --amber: #C98A2C;
+    --brown: #6B5544;
+    --white: #FFFFFF;
+    --ok: #3E7B5E;
+    --ok-bg: #E3F0E9;
+    --err: #B4453A;
+    --err-bg: #F6E2DF;
+    --line: #DED1B8;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    background: var(--sand-light);
+    color: var(--teal-dark);
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; margin:0; }
+  code{ background: rgba(15,59,59,0.07); padding: 1px 6px; border-radius: 4px; font-size: 0.85em; }
+
+  .layout{
+    display:grid;
+    grid-template-columns: 240px 1fr;
+    min-height:100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    position: relative;
+    background: var(--teal-dark);
+    color: var(--sand-light);
+    padding: 30px 22px;
+    display:flex;
+    flex-direction:column;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .sidebar::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image: url('https://loremflickr.com/480/900/ocean,coastline,dusk/all?lock=42');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.16;
+    mix-blend-mode: luminosity;
+  }
+  .sidebar::after{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(8,31,31,0.55) 0%, var(--teal-dark) 78%);
+  }
+  .sidebar > *{ position: relative; z-index: 1; }
+
+  .brand-row{ display:flex; align-items:center; gap:10px; margin-bottom: 2px; }
+  .brand-mark{
+    width: 34px; height: 34px; flex-shrink:0;
+  }
+  .brand{
+    color: var(--white);
+    font-size: 1.4rem;
+    font-weight:600;
+    line-height:1.1;
+    letter-spacing: -0.01em;
+  }
+  .brand-sub{
+    font-size:0.72rem;
+    color: var(--sand);
+    opacity:0.62;
+    margin: 4px 0 30px 44px;
+  }
+  .nav-btn{
+    display:flex; align-items:center; gap:10px;
+    text-align:left;
+    background:none;
+    border:none;
+    color: var(--sand);
+    font-family:'Inter', sans-serif;
+    font-size:0.95rem;
+    padding: 10px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-btn svg{ width:17px; height:17px; opacity:0.85; flex-shrink:0; }
+  .nav-btn:hover{ background: rgba(255,255,255,0.08); color: var(--white); }
+  .nav-btn.active{ background: var(--coral); color: var(--white); font-weight:600; }
+  .nav-btn.active svg{ opacity:1; }
+
+  .session-box{
+    margin-top:auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 0.8rem;
+  }
+  .session-box .label{ opacity:0.55; margin-bottom:4px; }
+  .session-email{ color: var(--white); font-weight:600; word-break:break-all; }
+  .logout-btn{
+    margin-top:10px;
+    background:none;
+    border: 1px solid rgba(255,255,255,0.28);
+    color: var(--sand);
+    padding: 6px 10px;
+    border-radius:6px;
+    font-size:0.8rem;
+    cursor:pointer;
+  }
+  .logout-btn:hover{ border-color: var(--coral); color: var(--white); }
+
+  /* ---------- Main ---------- */
+  .main{
+    position: relative;
+    padding: 0;
+    max-width: 1120px;
+  }
+  .main-inner{ padding: 44px 52px 60px; position:relative; }
+  .main::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(107,85,68,0.10) 1px, transparent 0);
+    background-size: 22px 22px;
+    pointer-events:none;
+    opacity:0.5;
+  }
+
+  .eyebrow-tag{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size: 0.78rem;
+    color: var(--coral-dark);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .eyebrow-tag svg{ width:14px; height:14px; }
+  .page-title{ font-size:2.1rem; margin-bottom:6px; font-weight:600; }
+  .page-sub{ color: var(--brown); margin-bottom: 30px; font-size:0.97rem; max-width: 64ch; }
+
+  .panel{
+    background: var(--white);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 24px rgba(15,59,59,0.08);
+    margin-bottom: 24px;
+    border: 1px solid rgba(222,209,184,0.6);
+  }
+
+  /* Split hero layout used on Register / Login */
+  .auth-split{
+    display:grid;
+    grid-template-columns: 1.05fr 0.85fr;
+    gap: 0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(15,59,59,0.14);
+    margin-bottom: 6px;
+  }
+  .auth-form-side{ background: var(--white); padding: 38px 40px; }
+  .auth-photo-side{
+    position: relative;
+    min-height: 100%;
+    background-size: cover;
+    background-position: center;
+  }
+  .auth-photo-side .caption{
+    position:absolute; left:0; right:0; bottom:0;
+    padding: 26px 28px;
+    background: linear-gradient(180deg, transparent, rgba(8,31,31,0.86));
+    color: var(--sand-light);
+  }
+  .auth-photo-side .caption .quote{
+    font-family:'Fraunces', serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+  .auth-photo-side .caption .who{ font-size:0.78rem; opacity:0.75; margin-top:8px; }
+
+  form.grid-form{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  form.grid-form.narrow{ grid-template-columns: 1fr; max-width: 380px; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.full{ grid-column: 1 / -1; }
+  label{ font-size:0.82rem; font-weight:600; color: var(--brown); }
+  input, select, textarea{
+    font-family:'Inter', sans-serif;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--sand-light);
+    color: var(--teal-dark);
+  }
+  input:focus, select:focus, textarea:focus{
+    outline: 2px solid transparent;
+    border-color: var(--coral);
+    background: var(--white);
+    box-shadow: 0 0 0 3px rgba(220,106,63,0.14);
+  }
+
+  .btn{
+    font-family:'Inter', sans-serif;
+    background: var(--coral);
+    color: var(--white);
+    border:none;
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight:600;
+    cursor:pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn:hover{ background: var(--coral-dark); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.secondary{
+    background: transparent;
+    color: var(--teal);
+    border: 1.5px solid var(--teal);
+  }
+  .btn.secondary:hover{ background: var(--teal); color: var(--white); }
+  .btn-row{ grid-column: 1/-1; margin-top: 4px; display:flex; gap:10px; align-items:center; }
+  .btn:focus-visible, .nav-btn:focus-visible, .refresh-btn:focus-visible{
+    outline: 2px solid var(--coral); outline-offset: 2px;
+  }
+
+  .status-msg{
+    font-size: 0.88rem;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 16px;
+    display:none;
+  }
+  .status-msg.show{ display:block; }
+  .status-msg.ok{ background: var(--ok-bg); color: var(--ok); }
+  .status-msg.err{ background: var(--err-bg); color: var(--err); }
+
+  .token-preview{
+    font-family: monospace;
+    font-size: 0.78rem;
+    background: var(--sand-light);
+    padding: 10px 12px;
+    border-radius: 8px;
+    word-break: break-all;
+    color: var(--brown);
+    margin-top: 10px;
+    border: 1px solid var(--line);
+  }
+
+  /* ---------- Page banner (Boats / Packages / Trips) ---------- */
+  .page-banner{
+    position: relative;
+    height: 168px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 26px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 4px 20px rgba(15,59,59,0.1);
+  }
+  .page-banner::after{
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(100deg, rgba(8,31,31,0.82) 0%, rgba(8,31,31,0.35) 55%, transparent 100%);
+  }
+  .page-banner .banner-text{
+    position: relative; z-index:1;
+    height:100%;
+    display:flex; flex-direction:column; justify-content:center;
+    padding: 0 34px;
+    color: var(--white);
+    max-width: 480px;
+  }
+  .page-banner .banner-text h1{ color: var(--white); }
+  .page-banner .banner-text p{ color: var(--sand); font-size:0.9rem; margin-top:6px; }
+
+  /* ---------- Cards ---------- */
+  .card-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+  }
+  .card{
+    background: var(--white);
+    border-radius: 14px;
+    overflow:hidden;
+    box-shadow: 0 3px 16px rgba(15,59,59,0.08);
+    display:flex;
+    flex-direction:column;
+    border-top: 4px solid var(--accent, var(--teal));
+  }
+  .card.boat-card{ --accent: var(--teal-mid); }
+  .card.package-card{ --accent: var(--coral); }
+  .card.trip-card{ --accent: var(--amber); }
+  .card .img-wrap{ position:relative; height: 150px; }
+  .card .img-wrap img{
+    width:100%;
+    height: 100%;
+    object-fit: cover;
+    display:block;
+    background: var(--sand);
+  }
+  .card-body{ padding: 17px 19px 19px; flex:1; display:flex; flex-direction:column; }
+  .card-title{ font-family:'Fraunces', serif; font-size:1.15rem; margin-bottom:6px; font-weight:600; }
+  .card-meta{ font-size:0.83rem; color: var(--brown); line-height:1.55; margin-bottom: 10px; }
+  .badge{
+    display:inline-block;
+    font-size:0.72rem;
+    font-weight:700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--ok-bg);
+    color: var(--ok);
+    margin-bottom:10px;
+    width:fit-content;
+  }
+  .badge.inactive{ background:#F0EAE0; color: var(--brown); }
+  .card-price{
+    margin-top:auto;
+    font-family:'Fraunces', serif;
+    font-size:1.25rem;
+    color: var(--coral-dark);
+    font-weight: 600;
+  }
+
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .refresh-btn{
+    display:flex; align-items:center; gap:7px;
+    background:none; border:1.5px solid var(--teal); color: var(--teal);
+    padding: 7px 15px; border-radius:8px; font-size:0.85rem; cursor:pointer; font-weight:600;
+  }
+  .refresh-btn svg{ width:14px; height:14px; }
+  .refresh-btn:hover{ background: var(--teal); color: var(--white); }
+
+  .empty-state{
+    text-align:center; padding: 44px 20px; color: var(--brown);
+    background: var(--white); border-radius: 14px; border: 1px dashed var(--line);
+  }
+  .locked-note{
+    display:flex; align-items:center; gap:9px;
+    font-size:0.87rem; background:#FBF3E3; color:#8A6423; padding:13px 16px; border-radius:10px; margin-bottom:18px;
+    border: 1px solid #EEDCB4;
+  }
+  .locked-note svg{ width:16px; height:16px; flex-shrink:0; }
+
+  .hidden{ display:none !important; }
+
+  .admin-badge{
+    display:flex; align-items:center; gap:7px;
+    font-size:0.78rem; font-weight:700; letter-spacing:0.01em;
+    color: var(--amber);
+    margin-bottom: 16px;
+  }
+  .admin-badge svg{ width:15px; height:15px; }
+  .card-actions{
+    display:flex; gap:8px; margin-top: 12px;
+    padding-top: 12px; border-top: 1px solid var(--line);
+  }
+  .icon-btn{
+    display:flex; align-items:center; gap:6px;
+    flex:1;
+    background: var(--sand-light);
+    border: 1.5px solid var(--line);
+    color: var(--teal-dark);
+    padding: 7px 10px;
+    border-radius: 7px;
+    font-size: 0.82rem;
+    font-weight:600;
+    cursor:pointer;
+    justify-content:center;
+    font-family:'Inter', sans-serif;
+  }
+  .icon-btn svg{ width:14px; height:14px; }
+  .icon-btn:hover{ background: var(--white); border-color: var(--teal); }
+  .icon-btn.danger:hover{ background: var(--err-bg); border-color: var(--err); color: var(--err-dark, var(--err)); }
+  .role-pill{
+    font-size: 0.72rem; font-weight:700; padding: 2px 9px; border-radius:20px;
+    background: rgba(255,255,255,0.12); color: var(--sand);
+    display:inline-block; margin-top: 4px;
+  }
+
+  .page{ animation: rise 0.32s ease; }
+  @keyframes rise{ from{ opacity:0; transform: translateY(6px);} to{ opacity:1; transform:none; } }
+
+  @media (prefers-reduced-motion: reduce){
+    .page{ animation:none; }
+  }
+
+  @media (max-width: 860px){
+    .layout{ grid-template-columns: 1fr; }
+    .sidebar{ flex-direction:row; flex-wrap:wrap; padding: 18px; }
+    .brand-sub{ display:none; }
+    .session-box{ margin-top: 10px; width:100%; }
+    .auth-split{ grid-template-columns: 1fr; }
+    .auth-photo-side{ min-height: 200px; order:-1; }
+    .main-inner{ padding: 28px 20px 44px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand-row">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none">
+        <path d="M4 26c4-6 8-9 16-9s12 3 16 9" stroke="#DC6A3F" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M2 31c4-4 8-6 18-6s14 2 18 6" stroke="#E8DCC8" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+        <circle cx="20" cy="12" r="5.5" stroke="#E8DCC8" stroke-width="2"/>
+      </svg>
+      <div class="brand">SafariWave</div>
+    </div>
+    <div class="brand-sub">EXPEDITION API CONSOLE</div>
+
+    <button class="nav-btn active" data-page="register">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c1-3.6 4-5.5 6.5-5.5s5.5 1.9 6.5 5.5"/></svg>
+      Register
+    </button>
+    <button class="nav-btn" data-page="login">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H4.5A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17H8"/><path d="M13 13.5 17 10l-4-3.5"/><path d="M17 10H7.5"/></svg>
+      Login
+    </button>
+    <button class="nav-btn" data-page="boats">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 13h15l-1.7 4H4.2z"/><path d="M4.5 13V6.5h7l3 6.5"/><path d="M8 6.5V3.5h2.5"/></svg>
+      Boats
+    </button>
+    <button class="nav-btn" data-page="packages">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 6.5 10 3l7 3.5-7 3.5z"/><path d="M3 6.5V14l7 3.5 7-3.5V6.5"/><path d="M10 10v7.5"/></svg>
+      Packages
+    </button>
+    <button class="nav-btn" data-page="trips">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4.5" width="14" height="12" rx="1.6"/><path d="M3 8.5h14"/><path d="M7 3v3M13 3v3"/></svg>
+      Trips
+    </button>
+
+    <div class="session-box">
+      <div class="label">Signed in as</div>
+      <div class="session-email" id="sessionEmail">Not logged in</div>
+      <span class="role-pill hidden" id="sessionRolePill"></span>
+      <button class="logout-btn hidden" id="logoutBtn">Log out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-inner">
+
+    <!-- REGISTER PAGE -->
+    <section id="page-register" class="page">
+      <div class="eyebrow-tag">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="6.5" r="3.2"/><path d="M3.5 17c1-3.6 4-5.5 6.5-5.5s5.5 1.9 6.5 5.5"/></svg>
+        New account
+      </div>
+      <h1 class="page-title">Join the crew</h1>
+      <p class="page-sub">Creates a row in <code>user</code> — the password is hashed server-side with BCrypt before it ever touches the database.</p>
+
+      <div class="auth-split">
+        <div class="auth-form-side">
+          <form class="grid-form" id="registerForm">
+            <div class="field">
+              <label>First name</label>
+              <input type="text" name="firstName" required placeholder="Alex">
+            </div>
+            <div class="field">
+              <label>Last name</label>
+              <input type="text" name="lastName" placeholder="Fernando">
+            </div>
+            <div class="field full">
+              <label>Email</label>
+              <input type="email" name="email" required placeholder="alex@example.com">
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" name="password" required placeholder="At least 6 characters">
+            </div>
+            <div class="field">
+              <label>Phone</label>
+              <input type="text" name="phone" placeholder="0770001111">
+            </div>
+            <div class="field full">
+              <label>Role</label>
+              <select name="roleId">
+                <option value="1">Customer (roleId 1)</option>
+                <option value="2">Admin (roleId 2)</option>
+              </select>
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn">Create account</button>
+            </div>
+          </form>
+          <div class="status-msg" id="registerStatus"></div>
+        </div>
+        <div class="auth-photo-side" style="background-image:url('https://loremflickr.com/700/900/whale,ocean,safari/all?lock=7')">
+          <div class="caption">
+            <div class="quote">"Every guest starts as a name in this form — and ends up out on the water."</div>
+            <div class="who">SafariWave onboarding</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOGIN PAGE -->
+    <section id="page-login" class="page hidden">
+      <div class="eyebrow-tag">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3H4.5A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17H8"/><path d="M13 13.5 17 10l-4-3.5"/><path d="M17 10H7.5"/></svg>
+        Welcome back
+      </div>
+      <h1 class="page-title">Log in</h1>
+      <p class="page-sub">Exchanges an email and password for a signed JWT from <code>/api/auth/login</code>.</p>
+
+      <div class="auth-split">
+        <div class="auth-form-side">
+          <form class="grid-form narrow" id="loginForm">
+            <div class="field">
+              <label>Email</label>
+              <input type="email" name="email" required placeholder="alex@example.com">
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" name="password" required placeholder="Password">
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn">Log in</button>
+            </div>
+          </form>
+          <div class="status-msg" id="loginStatus"></div>
+          <div class="token-preview hidden" id="tokenPreview"></div>
+        </div>
+        <div class="auth-photo-side" style="background-image:url('https://loremflickr.com/700/900/dolphin,boat,coast/all?lock=13')">
+          <div class="caption">
+            <div class="quote">"The token in your pocket is the difference between watching from the dock and being on deck."</div>
+            <div class="who">SafariWave auth</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOATS PAGE -->
+    <section id="page-boats" class="page hidden">
+      <div class="page-banner" style="background-image:url('https://loremflickr.com/1000/400/fishing,boat,harbor/all?lock=21')">
+        <div class="banner-text">
+          <h1>The fleet</h1>
+          <p>Live from <code style="background:rgba(255,255,255,0.18);color:#fff;">/api/boats</code> — protected, needs a valid token.</p>
+        </div>
+      </div>
+      <div class="locked-note hidden" id="boatsLockedNote">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg>
+        Log in first — this endpoint is protected.
+      </div>
+
+      <!-- Admin-only: add / edit boat -->
+      <div class="panel admin-only hidden" id="boatFormPanel">
+        <div class="admin-badge">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2 3 5v5c0 4 3 6.5 7 8 4-1.5 7-4 7-8V5z"/></svg>
+          Admin tools
+        </div>
+        <form class="grid-form" id="boatForm">
+          <input type="hidden" name="boatId" value="">
+          <div class="field">
+            <label>Boat name</label>
+            <input type="text" name="boatName" required placeholder="Sea Explorer">
+          </div>
+          <div class="field">
+            <label>Registration number</label>
+            <input type="text" name="registrationNumber" required placeholder="BT-1004">
+          </div>
+          <div class="field">
+            <label>Capacity</label>
+            <input type="number" name="capacity" min="1" required placeholder="20">
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select name="status">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Description</label>
+            <input type="text" name="description" placeholder="Compact safari boat">
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="btn" id="boatFormSubmitBtn">Add boat</button>
+            <button type="button" class="btn secondary hidden" id="boatFormCancelBtn" onclick="resetBoatForm()">Cancel edit</button>
+          </div>
+        </form>
+        <div class="status-msg" id="boatFormStatus"></div>
+      </div>
+
+      <div class="toolbar">
+        <span></span>
+        <button class="refresh-btn" onclick="loadBoats()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 8a6 6 0 1 0-1.4 6.3"/><path d="M16 4v4h-4"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="card-grid" id="boatsGrid"></div>
+    </section>
+
+    <!-- PACKAGES PAGE -->
+    <section id="page-packages" class="page hidden">
+      <div class="page-banner" style="background-image:url('https://loremflickr.com/1000/400/riverboat,safari,tour/all?lock=34')">
+        <div class="banner-text">
+          <h1>Safari packages</h1>
+          <p>Live from <code style="background:rgba(255,255,255,0.18);color:#fff;">/api/packages</code> — protected, needs a valid token.</p>
+        </div>
+      </div>
+      <div class="locked-note hidden" id="packagesLockedNote">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg>
+        Log in first — this endpoint is protected.
+      </div>
+      <div class="toolbar">
+        <span></span>
+        <button class="refresh-btn" onclick="loadPackages()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 8a6 6 0 1 0-1.4 6.3"/><path d="M16 4v4h-4"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="card-grid" id="packagesGrid"></div>
+    </section>
+
+    <!-- TRIPS PAGE -->
+    <section id="page-trips" class="page hidden">
+      <div class="page-banner" style="background-image:url('https://loremflickr.com/1000/400/riverboat,sunset,tour/all?lock=55')">
+        <div class="banner-text">
+          <h1>Scheduled trips</h1>
+          <p>Live from <code style="background:rgba(255,255,255,0.18);color:#fff;">/api/trips</code> — protected, needs a valid token.</p>
+        </div>
+      </div>
+      <div class="locked-note hidden" id="tripsLockedNote">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg>
+        Log in first — this endpoint is protected.
+      </div>
+      <div class="toolbar">
+        <span></span>
+        <button class="refresh-btn" onclick="loadTrips()">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 8a6 6 0 1 0-1.4 6.3"/><path d="M16 4v4h-4"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="card-grid" id="tripsGrid"></div>
+    </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const API_BASE = 'http://localhost:8080/api';
+
+// ---------- Session ----------
+function getToken(){ return localStorage.getItem('sw_token'); }
+function getEmail(){ return localStorage.getItem('sw_email'); }
+function getRole(){ return localStorage.getItem('sw_role'); }
+function isAdmin(){ return getRole() === 'ADMIN'; }
+function setSession(token, email, role){
+  localStorage.setItem('sw_token', token);
+  localStorage.setItem('sw_email', email);
+  localStorage.setItem('sw_role', role || '');
+  renderSession();
+}
+function clearSession(){
+  localStorage.removeItem('sw_token');
+  localStorage.removeItem('sw_email');
+  localStorage.removeItem('sw_role');
+  renderSession();
+}
+function renderSession(){
+  const email = getEmail();
+  const role = getRole();
+  document.getElementById('sessionEmail').textContent = email || 'Not logged in';
+  document.getElementById('logoutBtn').classList.toggle('hidden', !email);
+  const pill = document.getElementById('sessionRolePill');
+  pill.classList.toggle('hidden', !role);
+  if(role) pill.textContent = role;
+  // Show/hide every admin-only control across the app based on current role
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin()));
+  // Re-render whichever page is currently visible so card action buttons update immediately
+  if(!document.getElementById('page-boats').classList.contains('hidden')) loadBoats();
+}
+document.getElementById('logoutBtn').addEventListener('click', clearSession);
+
+// ---------- Nav ----------
+const pages = ['register','login','boats','packages','trips'];
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.page;
+    pages.forEach(p=>document.getElementById('page-'+p).classList.toggle('hidden', p!==target));
+    if(target==='boats') loadBoats();
+    if(target==='packages') loadPackages();
+    if(target==='trips') loadTrips();
+  });
+});
+
+// ---------- Helpers ----------
+function showStatus(id, message, ok){
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.remove('ok','err');
+  el.classList.add('show', ok ? 'ok' : 'err');
+}
+
+async function authedFetch(path, options = {}){
+  const token = getToken();
+  const headers = Object.assign(
+    {},
+    options.body ? { 'Content-Type': 'application/json' } : {},
+    token ? { 'Authorization': 'Bearer ' + token } : {},
+    options.headers || {}
+  );
+  const res = await fetch(API_BASE + path, { ...options, headers });
+  return res;
+}
+
+// Deterministic small hash so the same seed always resolves to the same photo
+function seedLock(seed){
+  let h = 0;
+  const s = String(seed);
+  for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) >>> 0; }
+  return h % 200;
+}
+// Thematic stock photo per record, keyed by category so boats/packages/trips
+// each draw from a relevant photo pool instead of a random placeholder.
+function stockImage(category, seed, w=440, h=300){
+  const tags = {
+    boat: 'boat,fishing-boat,harbor',
+    package: 'riverboat,safari,tour',
+    trip: 'boat,river,sunset'
+  }[category] || 'ocean';
+  return `https://loremflickr.com/${w}/${h}/${tags}/all?lock=${seedLock(seed)}`;
+}
+
+// ---------- Register ----------
+document.getElementById('registerForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const f = e.target;
+  const body = {
+    firstName: f.firstName.value,
+    lastName: f.lastName.value,
+    email: f.email.value,
+    password: f.password.value,
+    phone: f.phone.value,
+    roleId: Number(f.roleId.value),
+    status: 'ACTIVE'
+  };
+  try{
+    const res = await fetch(API_BASE + '/users', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+    if(res.ok){
+      const data = await res.json();
+      showStatus('registerStatus', `Account created — userId ${data.userId}, role ${data.roleName}. You can log in now.`, true);
+      f.reset();
+    } else {
+      showStatus('registerStatus', `Registration failed (HTTP ${res.status}). Email may already be in use.`, false);
+    }
+  }catch(err){
+    showStatus('registerStatus', `Could not reach the server. Is it running on localhost:8080? (${err.message})`, false);
+  }
+});
+
+// ---------- Login ----------
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const f = e.target;
+  const body = { email: f.email.value, password: f.password.value };
+  try{
+    const res = await fetch(API_BASE + '/auth/login', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(body)
+    });
+    if(res.ok){
+      const data = await res.json();
+      setSession(data.token, data.email, data.roleName);
+      showStatus('loginStatus', `Logged in as ${data.email} (${data.roleName}).`, true);
+      const preview = document.getElementById('tokenPreview');
+      preview.textContent = data.token;
+      preview.classList.remove('hidden');
+    } else {
+      showStatus('loginStatus', `Login failed (HTTP ${res.status}). Check email/password.`, false);
+    }
+  }catch(err){
+    showStatus('loginStatus', `Could not reach the server. Is it running on localhost:8080? (${err.message})`, false);
+  }
+});
+
+// ---------- Boats ----------
+let boatsCache = [];
+
+async function loadBoats(){
+  const grid = document.getElementById('boatsGrid');
+  const lockedNote = document.getElementById('boatsLockedNote');
+  document.getElementById('boatFormPanel').classList.toggle('hidden', !isAdmin());
+  if(!getToken()){
+    lockedNote.classList.remove('hidden');
+    grid.innerHTML = '';
+    return;
+  }
+  lockedNote.classList.add('hidden');
+  grid.innerHTML = '<p class="empty-state">Loading boats…</p>';
+  try{
+    const res = await authedFetch('/boats');
+    if(res.status === 401 || res.status === 403){
+      lockedNote.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg> Session expired or invalid — please log in again.';
+      lockedNote.classList.remove('hidden');
+      grid.innerHTML = '';
+      return;
+    }
+    const boats = await res.json();
+    boatsCache = boats;
+    if(!boats.length){ grid.innerHTML = '<p class="empty-state">No boats yet.</p>'; return; }
+    grid.innerHTML = boats.map(b => `
+      <div class="card boat-card">
+        <div class="img-wrap"><img src="${stockImage('boat', 'boat-'+b.boatId)}" alt="${b.boatName}"></div>
+        <div class="card-body">
+          <span class="badge ${b.status==='ACTIVE'?'':'inactive'}">${b.status || 'UNKNOWN'}</span>
+          <div class="card-title">${b.boatName}</div>
+          <div class="card-meta">
+            Reg. ${b.registrationNumber}<br>
+            Capacity: ${b.capacity} passengers<br>
+            ${b.description || ''}
+          </div>
+          ${isAdmin() ? `
+          <div class="card-actions">
+            <button class="icon-btn" onclick="editBoat(${b.boatId})">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13.5 3.5 16 6l-9 9-3 .8.8-3z"/></svg>
+              Edit
+            </button>
+            <button class="icon-btn danger" onclick="deleteBoat(${b.boatId})">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5h6.6L14 6"/></svg>
+              Delete
+            </button>
+          </div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }catch(err){
+    grid.innerHTML = `<p class="empty-state">Could not load boats (${err.message})</p>`;
+  }
+}
+
+function resetBoatForm(){
+  const form = document.getElementById('boatForm');
+  form.reset();
+  form.boatId.value = '';
+  document.getElementById('boatFormSubmitBtn').textContent = 'Add boat';
+  document.getElementById('boatFormCancelBtn').classList.add('hidden');
+  document.getElementById('boatFormStatus').classList.remove('show');
+}
+
+function editBoat(boatId){
+  const boat = boatsCache.find(b => b.boatId === boatId);
+  if(!boat) return;
+  const form = document.getElementById('boatForm');
+  form.boatId.value = boat.boatId;
+  form.boatName.value = boat.boatName || '';
+  form.registrationNumber.value = boat.registrationNumber || '';
+  form.capacity.value = boat.capacity || '';
+  form.status.value = boat.status || 'ACTIVE';
+  form.description.value = boat.description || '';
+  document.getElementById('boatFormSubmitBtn').textContent = 'Save changes';
+  document.getElementById('boatFormCancelBtn').classList.remove('hidden');
+  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('boatForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const f = e.target;
+  const boatId = f.boatId.value;
+  const body = {
+    boatName: f.boatName.value,
+    registrationNumber: f.registrationNumber.value,
+    capacity: Number(f.capacity.value),
+    status: f.status.value,
+    description: f.description.value
+  };
+  try{
+    const res = await authedFetch(boatId ? `/boats/${boatId}` : '/boats', {
+      method: boatId ? 'PUT' : 'POST',
+      body: JSON.stringify(body)
+    });
+    if(res.status === 403){
+      showStatus('boatFormStatus', 'Forbidden — admin role required for this action.', false);
+      return;
+    }
+    if(res.ok){
+      showStatus('boatFormStatus', boatId ? 'Boat updated.' : 'Boat added.', true);
+      resetBoatForm();
+      loadBoats();
+    } else {
+      showStatus('boatFormStatus', `Request failed (HTTP ${res.status}).`, false);
+    }
+  }catch(err){
+    showStatus('boatFormStatus', `Could not reach the server (${err.message})`, false);
+  }
+});
+
+async function deleteBoat(boatId){
+  if(!confirm('Delete this boat? This cannot be undone.')) return;
+  try{
+    const res = await authedFetch(`/boats/${boatId}`, { method: 'DELETE' });
+    if(res.status === 403){
+      alert('Forbidden — admin role required for this action.');
+      return;
+    }
+    if(res.ok || res.status === 204){
+      loadBoats();
+    } else {
+      alert(`Delete failed (HTTP ${res.status}).`);
+    }
+  }catch(err){
+    alert(`Could not reach the server (${err.message})`);
+  }
+}
+
+// ---------- Packages ----------
+async function loadPackages(){
+  const grid = document.getElementById('packagesGrid');
+  const lockedNote = document.getElementById('packagesLockedNote');
+  if(!getToken()){
+    lockedNote.classList.remove('hidden');
+    grid.innerHTML = '';
+    return;
+  }
+  lockedNote.classList.add('hidden');
+  grid.innerHTML = '<p class="empty-state">Loading packages…</p>';
+  try{
+    const res = await authedFetch('/packages');
+    if(res.status === 401 || res.status === 403){
+      lockedNote.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg> Session expired or invalid — please log in again.';
+      lockedNote.classList.remove('hidden');
+      grid.innerHTML = '';
+      return;
+    }
+    const pkgs = await res.json();
+    if(!pkgs.length){ grid.innerHTML = '<p class="empty-state">No packages yet.</p>'; return; }
+    grid.innerHTML = pkgs.map(p => `
+      <div class="card package-card">
+        <div class="img-wrap"><img src="${stockImage('package', 'safari-'+p.packageId)}" alt="${p.packageName}"></div>
+        <div class="card-body">
+          <span class="badge ${p.status==='ACTIVE'?'':'inactive'}">${p.status || 'UNKNOWN'}</span>
+          <div class="card-title">${p.packageName}</div>
+          <div class="card-meta">
+            ${p.description || ''}<br>
+            Duration: ${p.duration ?? '—'} hrs · Max ${p.maxPassengers ?? '—'} pax
+          </div>
+          <div class="card-price">Rs. ${Number(p.basePrice).toLocaleString()}</div>
+        </div>
+      </div>
+    `).join('');
+  }catch(err){
+    grid.innerHTML = `<p class="empty-state">Could not load packages (${err.message})</p>`;
+  }
+}
+
+// ---------- Trips ----------
+async function loadTrips(){
+  const grid = document.getElementById('tripsGrid');
+  const lockedNote = document.getElementById('tripsLockedNote');
+  if(!getToken()){
+    lockedNote.classList.remove('hidden');
+    grid.innerHTML = '';
+    return;
+  }
+  lockedNote.classList.add('hidden');
+  grid.innerHTML = '<p class="empty-state">Loading trips…</p>';
+  try{
+    const res = await authedFetch('/trips');
+    if(res.status === 401 || res.status === 403){
+      lockedNote.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9" width="12" height="8" rx="1.5"/><path d="M6.5 9V6a3.5 3.5 0 0 1 7 0v3"/></svg> Session expired or invalid — please log in again.';
+      lockedNote.classList.remove('hidden');
+      grid.innerHTML = '';
+      return;
+    }
+    const trips = await res.json();
+    if(!trips.length){ grid.innerHTML = '<p class="empty-state">No trips scheduled yet.</p>'; return; }
+    grid.innerHTML = trips.map(t => `
+      <div class="card trip-card">
+        <div class="img-wrap"><img src="${stockImage('trip', 'trip-'+t.tripId)}" alt="${t.packageName}"></div>
+        <div class="card-body">
+          <span class="badge ${t.status==='SCHEDULED'?'':'inactive'}">${t.status || 'UNKNOWN'}</span>
+          <div class="card-title">${t.packageName}</div>
+          <div class="card-meta">
+            ${t.tripDate} · ${t.startTime}–${t.endTime ?? '?'}<br>
+            Boat: ${t.boatName}<br>
+            Capacity: ${t.capacity ?? '—'}<br>
+            ${t.remarks ? 'Note: ' + t.remarks : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }catch(err){
+    grid.innerHTML = `<p class="empty-state">Could not load trips (${err.message})</p>`;
+  }
+}
+
+// ---------- Init ----------
+renderSession();
+</script>
+
+</body>
+</html>
