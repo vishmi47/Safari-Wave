@@ -30,6 +30,7 @@ public class SecurityFilterConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         // Boats: anyone logged in can read, only admins can write
                         .requestMatchers(HttpMethod.GET, "/api/boats/**").authenticated()
