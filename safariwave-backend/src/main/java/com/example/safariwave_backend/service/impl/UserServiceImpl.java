@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword())); // ✅ now hashed
+        user.setPassword(passwordEncoder.encode(dto.getPassword())); //  now hashed
         user.setPhone(dto.getPhone());
         user.setStatus(dto.getStatus());
 
