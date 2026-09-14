@@ -1,5 +1,6 @@
 package com.example.safariwave_backend.service.impl;
 
+import com.example.safariwave_backend.service.UserService;
 import com.example.safariwave_backend.dto.request.UserRegisterDTO;
 import com.example.safariwave_backend.dto.response.UserResponseDTO;
 import com.example.safariwave_backend.entity.Role;
