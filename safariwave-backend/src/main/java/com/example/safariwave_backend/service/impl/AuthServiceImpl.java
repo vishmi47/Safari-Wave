@@ -5,6 +5,7 @@ import com.example.safariwave_backend.dto.response.LoginResponseDTO;
 import com.example.safariwave_backend.entity.User;
 import com.example.safariwave_backend.repository.UserRepository;
 import com.example.safariwave_backend.security.JwtUtil;
+import com.example.safariwave_backend.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
