@@ -8,7 +8,12 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling.
+ * @deprecated use PartnerVendorServiceImpl instead (canonical class for the Partner & Vendor module).
+ */
 @Service
+@Deprecated
 public class VendorServiceImpl implements VendorService {
 
     private final VendorRepository vendorRepository;

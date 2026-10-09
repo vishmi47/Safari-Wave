@@ -1,9 +1,18 @@
 package com.example.safariwave_backend.service;
 
 import com.example.safariwave_backend.exception.DuplicateResourceException;
+import com.example.safariwave_backend.dto.request.PartnerVendorRequestDTO;
+import com.example.safariwave_backend.dto.response.PartnerVendorResponseDTO;
+import com.example.safariwave_backend.entity.PartnerVendorEntity;
+import com.example.safariwave_backend.enums.PartnerVendorStatus;
 import com.example.safariwave_backend.repository.PartnerVendorRepository;
 import com.example.safariwave_backend.service.impl.PartnerVendorServiceImpl;
+import com.example.safariwave_backend.security.AuthenticatedUser;
+import com.example.safariwave_backend.security.Roles;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +44,11 @@ class PartnerVendorServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Partner/vendor writes are ADMIN only (spec B.3)
+        AuthenticatedUser admin = new AuthenticatedUser(1, "admin@safariwave.test", Roles.ADMIN);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(admin, null, Roles.authoritiesFor(Roles.ADMIN)));
+
         requestDTO = new PartnerVendorRequestDTO();
         requestDTO.setBusinessName("Wild Horizon Travel");
         requestDTO.setPartnerType("TRAVEL_AGENCY");
@@ -49,6 +63,11 @@ class PartnerVendorServiceTest {
         requestDTO.setContractEndDate(LocalDate.now().plusMonths(12));
         requestDTO.setAgreementDetails("12 month agreement");
         requestDTO.setDocumentUrl("/uploads/partner-vendors/test.pdf");
+    }
+
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -93,7 +112,7 @@ class PartnerVendorServiceTest {
                 () -> partnerVendorService.createPartnerVendor(requestDTO)
         );
 
-        assertTrue(exception.getMessage().contains("contract start date"));
+        assertTrue(exception.getMessage().toLowerCase().contains("contract start date"));
     }
 
     @Test

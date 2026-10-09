@@ -3,6 +3,11 @@ package com.example.safariwave_backend.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling.
+ * @deprecated use PartnerVendorRequestDTO instead (canonical class for the Partner & Vendor module).
+ */
+@Deprecated
 public class VendorRegisterRequest {
 
     @NotBlank(message = "Business name is required")

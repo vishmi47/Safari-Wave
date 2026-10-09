@@ -38,9 +38,25 @@ public class SafariPackage {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // userId of the staff member who created the package (audit field, spec B.4)
+    @Column(name = "created_by")
+    private Integer createdBy;
+
 
     // Default constructor
     public SafariPackage() {
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
 
@@ -116,5 +132,13 @@ public class SafariPackage {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

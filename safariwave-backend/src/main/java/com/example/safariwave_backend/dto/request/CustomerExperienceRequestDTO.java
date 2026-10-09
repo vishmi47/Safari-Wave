@@ -1,15 +1,31 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class CustomerExperienceRequestDTO {
 
+    // Customers always submit for themselves; this is only used by ADMIN
     private Integer customerId;
     private Integer bookingId;
+    @NotBlank
     private String experienceType;
+    @NotBlank
+    @Size(max = 150)
     private String subject;
+    @NotBlank
+    @Size(max = 4000)
     private String description;
+    // 1-5; only for a completed trip of the customer's own booking
+    @Min(1)
+    @Max(5)
     private Integer rating;
     private String status;
+    @Size(max = 4000)
     private String response;
+    @Size(max = 4000)
     private String internalNotes;
 
     public CustomerExperienceRequestDTO() {

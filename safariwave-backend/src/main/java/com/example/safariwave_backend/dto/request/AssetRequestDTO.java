@@ -1,16 +1,29 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
 
 public class AssetRequestDTO {
 
+    @NotBlank
+    @Size(max = 120)
     private String assetName;
+    @NotBlank
+    @Size(max = 60)
     private String assetType;
+    @NotNull
+    @Min(0)
     private Integer quantity;
     private String conditionStatus;
     private String status;
+    @PastOrPresent
     private LocalDate purchaseDate;
     private String maintenanceStatus;
+    @Size(max = 2000)
     private String description;
     private Integer boatId;
 

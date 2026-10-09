@@ -4,9 +4,14 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling. Not used by any endpoint.
+ * @deprecated use BoatMaintenanceRecord (entity/BoatMaintenanceRecord.java) instead (canonical class for the Inventory & Asset module).
+ */
 @Entity
 @Table(name = "maintenance_records")
 @Data
+@Deprecated
 public class MaintenanceRecord {
 
     @Id

@@ -1,15 +1,26 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public class WeatherAlertRequestDTO {
 
+    @NotNull
     private LocalDateTime alertDateTime;
+    @NotBlank
+    @Size(max = 150)
     private String location;
+    @NotBlank
+    @Size(max = 100)
     private String weatherCondition;
+    @NotBlank
     private String severity;
+    @Size(max = 2000)
     private String description;
     private String alertStatus;
+    @Size(max = 1000)
     private String remarks;
 
     public WeatherAlertRequestDTO() {

@@ -7,9 +7,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling.
+ * @deprecated use PartnerVendorController (/api/partners-vendors) instead (canonical class for the Partner & Vendor module).
+ */
 @RestController
 @RequestMapping("/api/vendors")
 @CrossOrigin(origins = "*") // Frontend එක connect වෙන්න allow කරයි
+@Deprecated
 public class VendorController {
 
     @Autowired

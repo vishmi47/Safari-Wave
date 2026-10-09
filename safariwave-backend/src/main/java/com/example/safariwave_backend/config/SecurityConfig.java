@@ -22,7 +22,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of("*")); // also covers the 'null' origin from file://
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")); // PATCH: status updates, notifications
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(false); // must be false when origins is "*"
 

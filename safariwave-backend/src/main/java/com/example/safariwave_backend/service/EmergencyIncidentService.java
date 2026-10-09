@@ -3,6 +3,8 @@ package com.example.safariwave_backend.service;
 import com.example.safariwave_backend.dto.request.EmergencyIncidentRequestDTO;
 import com.example.safariwave_backend.dto.response.EmergencyIncidentResponseDTO;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -21,4 +23,7 @@ public interface EmergencyIncidentService {
     EmergencyIncidentResponseDTO updateEmergencyIncident(Integer incidentId, EmergencyIncidentRequestDTO dto);
 
     void deleteEmergencyIncident(Integer incidentId);
+
+    /** Paged search by type or description. */
+    Page<EmergencyIncidentResponseDTO> searchEmergencyIncidents(String query, String status, int page, int size);
 }

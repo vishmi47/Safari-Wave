@@ -3,7 +3,12 @@ package com.example.safariwave_backend.dto.request;
 import lombok.Data;
 import java.time.LocalDate;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling. Not used by any endpoint.
+ * @deprecated use BoatMaintenanceRequestDTO instead (canonical class for the Inventory & Asset module).
+ */
 @Data
+@Deprecated
 public class MaintenanceRecordDTO {
     private Long id;
     private Long boatId;

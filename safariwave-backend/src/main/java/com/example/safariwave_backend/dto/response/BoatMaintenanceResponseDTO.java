@@ -19,6 +19,8 @@ public class BoatMaintenanceResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Integer createdBy;
+
     public BoatMaintenanceResponseDTO() {
     }
 
@@ -116,5 +118,13 @@ public class BoatMaintenanceResponseDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

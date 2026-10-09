@@ -16,7 +16,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling. Not used by any endpoint.
+ * @deprecated use AssetServiceImpl instead (canonical class for the Inventory & Asset module).
+ */
 @Service
+@Deprecated
 public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepository;

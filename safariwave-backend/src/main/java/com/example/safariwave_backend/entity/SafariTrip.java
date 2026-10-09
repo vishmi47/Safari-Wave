@@ -47,9 +47,29 @@ public class SafariTrip {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Guide assigned by the Operations Supervisor (spec 6.1 / B.3)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guide_id")
+    private User guide;
+
+    @Column(name = "created_by")
+    private Integer createdBy;
+
 
     // Default constructor
     public SafariTrip() {
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
 
@@ -141,5 +161,21 @@ public class SafariTrip {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public User getGuide() {
+        return guide;
+    }
+
+    public void setGuide(User guide) {
+        this.guide = guide;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

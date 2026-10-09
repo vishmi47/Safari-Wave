@@ -1,11 +1,24 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 public class BoatRequestDTO {
 
+    @NotBlank
+    @Size(max = 100)
     private String boatName;
+    @NotBlank
+    @Size(max = 50)
     private String registrationNumber;
+    @NotNull
+    @Min(1)
     private Integer capacity;
+    @NotBlank
     private String status;
+    @Size(max = 255)
     private String description;
 
     public BoatRequestDTO() {

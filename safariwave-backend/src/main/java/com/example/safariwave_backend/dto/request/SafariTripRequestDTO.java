@@ -1,18 +1,29 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class SafariTripRequestDTO {
 
-    private Integer packageId;
-    private Integer boatId;
+    @NotNull private Integer packageId;
+    @NotNull private Integer boatId;
+    @NotNull @FutureOrPresent
     private LocalDate tripDate;
+    @NotNull
     private LocalTime startTime;
+    @NotNull
     private LocalTime endTime;
+    @NotNull @Min(1)
     private Integer capacity;
+    @NotNull
     private String status;
     private String remarks;
+
+    // Optional: user id of a GUIDE to assign to the trip
+    private Integer guideId;
 
     public SafariTripRequestDTO() {
     }
@@ -79,5 +90,13 @@ public class SafariTripRequestDTO {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public Integer getGuideId() {
+        return guideId;
+    }
+
+    public void setGuideId(Integer guideId) {
+        this.guideId = guideId;
     }
 }

@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Runtime uploads (promotion banners, private partner documents) ###
+uploads/
+uploads-private/

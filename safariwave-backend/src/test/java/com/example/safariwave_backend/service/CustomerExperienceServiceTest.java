@@ -1,11 +1,19 @@
 package com.example.safariwave_backend.service;
 
 import com.example.safariwave_backend.entity.User;
+import com.example.safariwave_backend.entity.Booking;
+import com.example.safariwave_backend.dto.request.CustomerExperienceRequestDTO;
+import com.example.safariwave_backend.entity.CustomerExperience;
 import com.example.safariwave_backend.repository.BookingRepository;
 import com.example.safariwave_backend.repository.CustomerExperienceRepository;
 import com.example.safariwave_backend.repository.UserRepository;
 import com.example.safariwave_backend.service.impl.CustomerExperienceServiceImpl;
+import com.example.safariwave_backend.security.AuthenticatedUser;
+import com.example.safariwave_backend.security.Roles;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,6 +53,18 @@ class CustomerExperienceServiceTest {
 
         booking = new Booking();
         booking.setBookingId(7);
+        // A rating needs the customer's own completed booking (spec B.3)
+        booking.setCustomer(user);
+        booking.setBookingStatus("COMPLETED");
+
+        AuthenticatedUser principal = new AuthenticatedUser(1, "customer@example.com", Roles.CUSTOMER);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, Roles.authoritiesFor(Roles.CUSTOMER)));
+    }
+
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test

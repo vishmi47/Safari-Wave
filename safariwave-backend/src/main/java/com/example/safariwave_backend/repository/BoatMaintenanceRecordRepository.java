@@ -13,4 +13,6 @@ public interface BoatMaintenanceRecordRepository extends JpaRepository<BoatMaint
     List<BoatMaintenanceRecord> findByBoat(Boat boat);
 
     List<BoatMaintenanceRecord> findByMaintenanceStatus(String maintenanceStatus);
+
+    boolean existsByBoat_BoatId(Integer boatId);
 }

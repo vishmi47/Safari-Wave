@@ -1,16 +1,27 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class BoatMaintenanceRequestDTO {
 
+    @NotNull
     private Integer boatId;
+    @NotNull
+    @PastOrPresent
     private LocalDate inspectionDate;
+    @Size(max = 2000)
     private String inspectionFindings;
+    @Size(max = 2000)
     private String maintenanceDescription;
     private String maintenanceStatus;
+    @DecimalMin("0.00")
     private BigDecimal maintenanceCost;
+    @Size(max = 1000)
     private String remarks;
     private LocalDate nextInspectionDate;
 

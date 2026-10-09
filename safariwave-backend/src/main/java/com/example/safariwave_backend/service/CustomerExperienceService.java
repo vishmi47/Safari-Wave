@@ -5,8 +5,11 @@ import com.example.safariwave_backend.dto.request.ComplaintStatusUpdateRequestDT
 import com.example.safariwave_backend.dto.request.CustomerExperienceRequestDTO;
 import com.example.safariwave_backend.dto.response.CustomerExperienceResponseDTO;
 
+import org.springframework.data.domain.Page;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CustomerExperienceService {
@@ -48,4 +51,16 @@ public interface CustomerExperienceService {
     CustomerExperienceResponseDTO updateComplaintStatusDirectly(Integer id, String status, String internalNotes);
 
     Object getDashboardSummary();
+
+    /** Paged search scoped by role (own records, guide trips, ratings only for marketing). */
+    Page<CustomerExperienceResponseDTO> searchExperiences(String query, String status, String type, int page, int size);
+
+    /** Rated records for marketing (customer details hidden). */
+    List<CustomerExperienceResponseDTO> getRatings();
+
+    /** Average rating, counts and distribution (marketing and customer relations). */
+    Map<String, Object> getRatingSummary();
+
+    /** Feedback and ratings on trips the logged-in guide led. */
+    List<CustomerExperienceResponseDTO> getFeedbackForMyTrips();
 }

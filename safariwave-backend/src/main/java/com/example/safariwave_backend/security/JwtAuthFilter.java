@@ -7,13 +7,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -34,14 +32,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 String email = jwtUtil.extractEmail(token);
                 String role = jwtUtil.extractRole(token);
+                Integer userId = jwtUtil.extractUserId(token);
 
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     if (jwtUtil.validateToken(token, email)) {
+                        // Principal carries userId and role so services can check "own records" without a DB lookup.
                         UsernamePasswordAuthenticationToken authToken =
                                 new UsernamePasswordAuthenticationToken(
-                                        email,
+                                        new AuthenticatedUser(userId, email, role),
                                         null,
-                                        List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                                        Roles.authoritiesFor(role)
                                 );
                         SecurityContextHolder.getContext().setAuthentication(authToken);
                     }

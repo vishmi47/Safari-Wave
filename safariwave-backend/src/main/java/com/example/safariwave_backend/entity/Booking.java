@@ -22,6 +22,14 @@ public class Booking {
     @Column(name = "boat_id", nullable = false)
     private Integer boatId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trip_id")
+    private SafariTrip safariTrip;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "package_id")
+    private SafariPackage safariPackage;
+
     @Column(name = "trip_date", nullable = false)
     private LocalDate tripDate;
 
@@ -45,6 +53,17 @@ public class Booking {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // Price snapshot taken when the booking is made (spec B.3): later package or promotion edits do not change it
+    @Column(name = "unit_price", precision = 10, scale = 2)
+    private BigDecimal unitPrice;
+
+    @Column(name = "discount_percentage", precision = 5, scale = 2)
+    private BigDecimal discountPercentage;
+
+    // userId of whoever made the booking (the customer, or staff booking on their behalf)
+    @Column(name = "created_by")
+    private Integer createdBy;
 
 
     // Default constructor
@@ -76,6 +95,22 @@ public class Booking {
 
     public void setBoatId(Integer boatId) {
         this.boatId = boatId;
+    }
+
+    public SafariTrip getSafariTrip() {
+        return safariTrip;
+    }
+
+    public void setSafariTrip(SafariTrip safariTrip) {
+        this.safariTrip = safariTrip;
+    }
+
+    public SafariPackage getSafariPackage() {
+        return safariPackage;
+    }
+
+    public void setSafariPackage(SafariPackage safariPackage) {
+        this.safariPackage = safariPackage;
     }
 
     public LocalDate getTripDate() {
@@ -140,5 +175,29 @@ public class Booking {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    public BigDecimal getDiscountPercentage() {
+        return discountPercentage;
+    }
+
+    public void setDiscountPercentage(BigDecimal discountPercentage) {
+        this.discountPercentage = discountPercentage;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

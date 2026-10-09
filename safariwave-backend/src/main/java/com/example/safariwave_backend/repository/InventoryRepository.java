@@ -7,7 +7,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling. Not used by any endpoint.
+ * @deprecated use AssetRepository instead (canonical class for the Inventory & Asset module).
+ */
 @Repository
+@Deprecated
 public interface InventoryRepository extends JpaRepository<InventoryItem, Long> {
 
     @Query("SELECT i FROM InventoryItem i WHERE i.quantity <= i.minThreshold")

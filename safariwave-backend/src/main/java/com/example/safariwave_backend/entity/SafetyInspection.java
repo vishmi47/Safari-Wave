@@ -43,6 +43,10 @@ public class SafetyInspection {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // userId of whoever recorded it; guides may only edit their own records (spec B.3)
+    @Column(name = "created_by")
+    private Integer createdBy;
+
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -136,5 +140,13 @@ public class SafetyInspection {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

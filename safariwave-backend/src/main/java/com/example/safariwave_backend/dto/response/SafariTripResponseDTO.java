@@ -23,6 +23,16 @@ public class SafariTripResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Integer guideId;
+
+    private String guideName;
+
+    private Integer bookedSeats;
+
+    private Integer availableSeats;
+
+    private Integer createdBy;
+
     public SafariTripResponseDTO() {
     }
 
@@ -128,5 +138,45 @@ public class SafariTripResponseDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getGuideId() {
+        return guideId;
+    }
+
+    public void setGuideId(Integer guideId) {
+        this.guideId = guideId;
+    }
+
+    public String getGuideName() {
+        return guideName;
+    }
+
+    public void setGuideName(String guideName) {
+        this.guideName = guideName;
+    }
+
+    public Integer getBookedSeats() {
+        return bookedSeats;
+    }
+
+    public void setBookedSeats(Integer bookedSeats) {
+        this.bookedSeats = bookedSeats;
+    }
+
+    public Integer getAvailableSeats() {
+        return availableSeats;
+    }
+
+    public void setAvailableSeats(Integer availableSeats) {
+        this.availableSeats = availableSeats;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

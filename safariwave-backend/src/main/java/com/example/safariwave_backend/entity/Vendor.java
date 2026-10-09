@@ -3,8 +3,13 @@ package com.example.safariwave_backend.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Legacy duplicate kept so existing teammate code keeps compiling.
+ * @deprecated use PartnerVendorEntity (entity/PartnerVendorEntity.java) instead (canonical class for the Partner & Vendor module).
+ */
 @Entity
 @Table(name = "vendors")
+@Deprecated
 public class Vendor {
 
     @Id

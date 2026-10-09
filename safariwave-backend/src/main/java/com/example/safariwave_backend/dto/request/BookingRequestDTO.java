@@ -1,16 +1,25 @@
 package com.example.safariwave_backend.dto.request;
 
-import java.math.BigDecimal;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public class BookingRequestDTO {
 
+    // Customers always book for themselves; staff booking on a customer's behalf must send userId.
     private Integer userId;
+    // boatId, tripDate and timeSlot are taken from the selected trip; when sent they must match it.
     private Integer boatId;
+    @NotNull
+    private Integer tripId;
+    private Integer packageId;
+    @FutureOrPresent
     private LocalDate tripDate;
     private String timeSlot;
+    @NotNull
+    @Min(1)
     private Integer numberOfPeople;
-    private BigDecimal totalPrice;
     private String paymentStatus;
     private String bookingStatus;
 
@@ -57,12 +66,20 @@ public class BookingRequestDTO {
         this.numberOfPeople = numberOfPeople;
     }
 
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
+    public Integer getTripId() {
+        return tripId;
     }
 
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
+    public void setTripId(Integer tripId) {
+        this.tripId = tripId;
+    }
+
+    public Integer getPackageId() {
+        return packageId;
+    }
+
+    public void setPackageId(Integer packageId) {
+        this.packageId = packageId;
     }
 
     public String getPaymentStatus() {

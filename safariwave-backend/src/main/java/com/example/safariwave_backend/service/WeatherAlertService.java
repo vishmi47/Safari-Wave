@@ -3,6 +3,8 @@ package com.example.safariwave_backend.service;
 import com.example.safariwave_backend.dto.request.WeatherAlertRequestDTO;
 import com.example.safariwave_backend.dto.response.WeatherAlertResponseDTO;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -21,4 +23,7 @@ public interface WeatherAlertService {
     WeatherAlertResponseDTO updateWeatherAlert(Integer alertId, WeatherAlertRequestDTO dto);
 
     void deleteWeatherAlert(Integer alertId);
+
+    /** Paged search. Customers only get active alerts on the days of their upcoming bookings. */
+    Page<WeatherAlertResponseDTO> searchWeatherAlerts(String query, String status, int page, int size);
 }

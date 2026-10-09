@@ -15,6 +15,8 @@ public class WeatherAlertResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Integer createdBy;
+
     public WeatherAlertResponseDTO() {
     }
 
@@ -96,5 +98,13 @@ public class WeatherAlertResponseDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

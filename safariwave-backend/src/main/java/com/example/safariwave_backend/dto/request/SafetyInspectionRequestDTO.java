@@ -1,15 +1,23 @@
 package com.example.safariwave_backend.dto.request;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public class SafetyInspectionRequestDTO {
 
     private Integer boatId;
     private Integer tripId;
+    @NotNull
+    @PastOrPresent
     private LocalDate inspectionDate;
+    @Size(max = 100)
     private String inspector;
+    @Size(max = 2000)
     private String findings;
     private String safetyStatus;
+    @Size(max = 1000)
     private String remarks;
 
     public SafetyInspectionRequestDTO() {

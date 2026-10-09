@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "promotion")
-public class Promotion {
+public class
+Promotion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +42,10 @@ public class Promotion {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // userId of the marketing user who created the promotion (audit field, spec B.4)
+    @Column(name = "created_by")
+    private Integer createdBy;
 
     // Many promotions can belong to one safari package
     @ManyToOne(fetch = FetchType.LAZY)
@@ -161,5 +166,13 @@ public class Promotion {
 
     public void setSafariPackage(SafariPackage safariPackage) {
         this.safariPackage = safariPackage;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

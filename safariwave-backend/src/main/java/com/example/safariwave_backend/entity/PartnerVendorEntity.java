@@ -77,6 +77,10 @@ public class PartnerVendorEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // userId of the admin who registered the partner (audit field, spec B.4)
+    @Column(name = "created_by")
+    private Integer createdBy;
+
     public PartnerVendorEntity() {
     }
 
@@ -234,5 +238,13 @@ public class PartnerVendorEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

@@ -17,6 +17,8 @@ public class EmergencyIncidentResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private Integer createdBy;
+
     public EmergencyIncidentResponseDTO() {
     }
 
@@ -114,5 +116,13 @@ public class EmergencyIncidentResponseDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Integer createdBy) {
+        this.createdBy = createdBy;
     }
 }

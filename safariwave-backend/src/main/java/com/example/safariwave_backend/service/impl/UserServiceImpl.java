@@ -4,8 +4,12 @@ import com.example.safariwave_backend.dto.request.UserRegisterDTO;
 import com.example.safariwave_backend.dto.response.UserResponseDTO;
 import com.example.safariwave_backend.entity.Role;
 import com.example.safariwave_backend.entity.User;
+import com.example.safariwave_backend.exception.BadRequestException;
+import com.example.safariwave_backend.exception.DuplicateResourceException;
+import com.example.safariwave_backend.exception.ResourceNotFoundException;
 import com.example.safariwave_backend.repository.RoleRepository;
 import com.example.safariwave_backend.repository.UserRepository;
+import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,12 +33,28 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO registerUser(UserRegisterDTO dto) {
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already registered: " + dto.getEmail());
+        if (dto.getRoleId() == null) {
+            throw new BadRequestException("Role is required.");
         }
-
         Role role = roleRepository.findById(dto.getRoleId())
-                .orElseThrow(() -> new RuntimeException("Role not found with id: " + dto.getRoleId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + dto.getRoleId()));
+
+        String status = dto.getStatus() == null || dto.getStatus().isBlank() ? "ACTIVE" : dto.getStatus();
+        return createUser(dto, role, status);
+    }
+
+    @Override
+    public UserResponseDTO registerCustomer(UserRegisterDTO dto) {
+        // Self-registration: the requested roleId/status are ignored so nobody can sign up as staff.
+        Role role = roleRepository.findFirstByRoleNameIgnoreCase(Roles.CUSTOMER)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer role is not configured."));
+        return createUser(dto, role, "ACTIVE");
+    }
+
+    private UserResponseDTO createUser(UserRegisterDTO dto, Role role, String status) {
+        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+            throw new DuplicateResourceException("Email already registered: " + dto.getEmail());
+        }
 
         User user = new User();
         user.setRole(role);
@@ -43,7 +63,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword())); //  now hashed
         user.setPhone(dto.getPhone());
-        user.setStatus(dto.getStatus());
+        user.setStatus(status);
 
         User saved = userRepository.save(user);
         return toResponseDTO(saved);
@@ -68,9 +88,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponseDTO> getCustomers() {
+        return userRepository.findByRole_RoleNameInOrderByFirstNameAsc(List.of(Roles.CUSTOMER))
+                .stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public UserResponseDTO updateUser(Integer userId, UserRegisterDTO dto) {
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         existingUser.setFirstName(dto.getFirstName());
         existingUser.setLastName(dto.getLastName());
@@ -84,7 +112,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Integer userId) {
         if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("User not found with id: " + userId);
+            throw new ResourceNotFoundException("User not found with id: " + userId);
         }
         userRepository.deleteById(userId);
     }
