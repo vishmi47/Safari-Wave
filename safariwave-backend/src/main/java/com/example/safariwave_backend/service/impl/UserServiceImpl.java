@@ -1,6 +1,7 @@
 package com.example.safariwave_backend.service.impl;
 
 import com.example.safariwave_backend.dto.request.UserRegisterDTO;
+import com.example.safariwave_backend.dto.request.WalkInCustomerRequestDTO;
 import com.example.safariwave_backend.dto.response.UserResponseDTO;
 import com.example.safariwave_backend.entity.Role;
 import com.example.safariwave_backend.entity.User;
@@ -10,6 +11,7 @@ import com.example.safariwave_backend.exception.ResourceNotFoundException;
 import com.example.safariwave_backend.repository.RoleRepository;
 import com.example.safariwave_backend.repository.UserRepository;
 import com.example.safariwave_backend.security.Roles;
+import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.service.UserService;
 import com.example.safariwave_backend.service.factory.UserFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +53,28 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer role is not configured."));
         requireUniqueEmail(dto.getEmail());
         return toResponseDTO(userRepository.save(userFactory.newCustomer(dto, role)));
+    }
+
+    @Override
+    public UserResponseDTO registerWalkInCustomer(WalkInCustomerRequestDTO dto) {
+        CurrentUser.requireAnyRole(Roles.CUSTOMER_RELATIONS);
+        String email = normalize(dto.getEmail());
+        String phone = normalize(dto.getPhone());
+        if (email == null && phone == null) {
+            throw new BadRequestException("A walk-in customer must provide an email address or phone number.");
+        }
+
+        UserRegisterDTO account = new UserRegisterDTO();
+        account.setFirstName(dto.getFirstName().trim());
+        account.setLastName(normalize(dto.getLastName()));
+        account.setPhone(phone);
+        account.setEmail(email == null ? "walk-in-" + UUID.randomUUID() + "@walkin.safariwave.invalid" : email);
+        account.setPassword(UUID.randomUUID().toString());
+        return registerCustomer(account);
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private void requireUniqueEmail(String email) {

@@ -1,6 +1,7 @@
 package com.example.safariwave_backend.service;
 
 import com.example.safariwave_backend.dto.request.UserRegisterDTO;
+import com.example.safariwave_backend.dto.request.WalkInCustomerRequestDTO;
 import com.example.safariwave_backend.dto.response.UserResponseDTO;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public interface UserService {
 
     /** Public self-registration: always creates an ACTIVE CUSTOMER, whatever role was requested. */
     UserResponseDTO registerCustomer(UserRegisterDTO dto);
+
+    /** Creates a customer profile for an in-person booking without issuing login credentials. */
+    UserResponseDTO registerWalkInCustomer(WalkInCustomerRequestDTO dto);
 
     Optional<UserResponseDTO> getUserById(Integer userId);
 

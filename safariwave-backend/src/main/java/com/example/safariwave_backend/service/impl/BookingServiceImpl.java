@@ -19,6 +19,7 @@ import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.BookingService;
 import com.example.safariwave_backend.service.NotificationService;
+import com.example.safariwave_backend.service.UserService;
 import com.example.safariwave_backend.service.pricing.PricingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,18 +92,39 @@ public class BookingServiceImpl implements BookingService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private UserService userService;
+
     @Override
     @Transactional
     public BookingResponseDTO createBooking(BookingRequestDTO dto) {
         CurrentUser.requireAnyRole(Roles.CUSTOMER, Roles.CUSTOMER_RELATIONS);
         boolean customer = isCustomer();
-
-        Integer customerId = customer ? CurrentUser.id() : dto.getUserId();
-        if (customerId == null) {
-            throw new BadRequestException("Customer (userId) is required when booking on behalf of a customer.");
+        User customerUser;
+        if (customer) {
+            if (dto.getWalkInCustomer() != null) {
+                throw new BadRequestException("Customers cannot create walk-in customer profiles.");
+            }
+            customerUser = userRepository.findById(CurrentUser.id())
+                    .orElseThrow(() -> new ResourceNotFoundException("Authenticated customer was not found."));
+        } else {
+            if (dto.getUserId() != null && dto.getWalkInCustomer() != null) {
+                throw new BadRequestException("Select an existing customer or enter walk-in customer details, not both.");
+            }
+            if (dto.getWalkInCustomer() != null) {
+                Integer walkInUserId = userService.registerWalkInCustomer(dto.getWalkInCustomer()).getUserId();
+                customerUser = userRepository.findById(walkInUserId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Walk-in customer profile was not created."));
+            } else if (dto.getUserId() != null) {
+                customerUser = userRepository.findById(dto.getUserId())
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + dto.getUserId()));
+            } else {
+                throw new BadRequestException("Select an existing customer or provide walk-in customer details.");
+            }
+            if (!Roles.CUSTOMER.equalsIgnoreCase(customerUser.getRole().getRoleName())) {
+                throw new BadRequestException("Bookings can only be created for customer accounts.");
+            }
         }
-        User customerUser = userRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + customerId));
 
         SafariTrip trip = findTrip(dto.getTripId());
         requireBookableTrip(trip);

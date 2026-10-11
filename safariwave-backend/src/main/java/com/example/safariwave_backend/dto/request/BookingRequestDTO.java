@@ -3,12 +3,15 @@ package com.example.safariwave_backend.dto.request;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 
 public class BookingRequestDTO {
 
     // Customers always book for themselves; staff booking on a customer's behalf must send userId.
     private Integer userId;
+    @Valid
+    private WalkInCustomerRequestDTO walkInCustomer;
     // boatId, tripDate and timeSlot are taken from the selected trip; when sent they must match it.
     private Integer boatId;
     @NotNull
@@ -32,6 +35,14 @@ public class BookingRequestDTO {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public WalkInCustomerRequestDTO getWalkInCustomer() {
+        return walkInCustomer;
+    }
+
+    public void setWalkInCustomer(WalkInCustomerRequestDTO walkInCustomer) {
+        this.walkInCustomer = walkInCustomer;
     }
 
     public Integer getBoatId() {

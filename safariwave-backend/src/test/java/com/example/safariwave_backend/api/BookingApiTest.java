@@ -83,6 +83,35 @@ class BookingApiTest extends ApiTestSupport {
     }
 
     @Test
+    void customerRelationsCanCreateBookingForWalkInClient() throws Exception {
+        TestUser ops = createUser(Roles.OPERATIONS);
+        TestUser relations = createUser(Roles.CUSTOMER_RELATIONS);
+        TestUser finance = createUser(Roles.FINANCE);
+        Boat boat = createBoat(8, "OPERATIONAL");
+        SafariPackage safariPackage = createPackage("1200.00", 8);
+        String tripBody = mockMvc.perform(as(ops, post("/api/trips")).content("""
+                        {"packageId": %d, "boatId": %d, "tripDate": "%s", "startTime": "09:00", "endTime": "11:00", "capacity": 8, "status": "SCHEDULED"}
+                        """.formatted(safariPackage.getPackageId(), boat.getBoatId(), LocalDate.now().plusDays(4))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer tripId = JsonPath.read(tripBody, "$.tripId");
+        String walkInBooking = """
+                {"tripId": %d, "numberOfPeople": 2,
+                 "walkInCustomer": {"firstName": "Amaya", "lastName": "Silva", "phone": "0771234567"}}
+                """.formatted(tripId);
+
+        mockMvc.perform(as(finance, post("/api/bookings")).content(walkInBooking))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(as(relations, post("/api/bookings")).content(walkInBooking))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.customerName").value("Amaya Silva"))
+                .andExpect(jsonPath("$.createdBy").value(relations.id()))
+                .andExpect(jsonPath("$.bookingStatus").value("PENDING"))
+                .andExpect(jsonPath("$.paymentStatus").value("PENDING"));
+    }
+
+    @Test
     void cancellingTrip_cancelsBookings_andHardDeleteIsAdminOnly() throws Exception {
         TestUser ops = createUser(Roles.OPERATIONS);
         TestUser customer = createUser(Roles.CUSTOMER);
