@@ -22,9 +22,11 @@ class InventoryApiTest extends ApiTestSupport {
         TestUser admin = createUser(Roles.ADMIN);
 
         // Operations adds a boat (previously only ADMIN could)
-        mockMvc.perform(as(ops, post("/api/boats")).content("""
+        String firstBoat = mockMvc.perform(as(ops, post("/api/boats")).content("""
                         {"boatName": "Egret", "registrationNumber": "WL-777", "capacity": 8, "status": "OPERATIONAL"}"""))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer firstBoatId = com.jayway.jsonpath.JsonPath.read(firstBoat, "$.boatId");
         mockMvc.perform(as(ops, post("/api/boats")).content("""
                         {"boatName": "Egret 2", "registrationNumber": "wl-777", "capacity": 8, "status": "OPERATIONAL"}"""))
                 .andExpect(status().isConflict());
@@ -36,12 +38,21 @@ class InventoryApiTest extends ApiTestSupport {
         mockMvc.perform(as(customer, get("/api/assets"))).andExpect(status().isForbidden());
 
         // Assets: operations creates, guide reports condition, finance cannot edit
+        String secondBoat = mockMvc.perform(as(ops, post("/api/boats")).content("""
+                        {"boatName": "Egret spare", "registrationNumber": "WL-778", "capacity": 6, "status": "OPERATIONAL"}"""))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer secondBoatId = com.jayway.jsonpath.JsonPath.read(secondBoat, "$.boatId");
         String asset = mockMvc.perform(as(ops, post("/api/assets")).content("""
-                        {"assetName": "Life jacket M", "assetType": "SAFETY_GEAR", "quantity": 20}"""))
+                        {"assetName": "Life jacket M", "assetType": "SAFETY_GEAR", "quantity": 20, "boatIds": [%d, %d]}""".formatted(firstBoatId, secondBoatId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.boats.length()").value(2))
                 .andReturn().getResponse().getContentAsString();
         Integer assetId = com.jayway.jsonpath.JsonPath.read(asset, "$.assetId");
+        mockMvc.perform(as(admin, delete("/api/boats/" + firstBoatId + "?permanent=true")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("assets")));
         mockMvc.perform(as(ops, post("/api/assets")).content("{\"assetName\": \"\", \"assetType\": \"X\", \"quantity\": -1}"))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(as(guide, patch("/api/assets/" + assetId + "/condition")).content("{\"status\": \"DAMAGED\", \"remarks\": \"torn\"}"))

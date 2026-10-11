@@ -33,12 +33,23 @@ class SafetyApiTest extends ApiTestSupport {
                 .andExpect(status().isCreated());
 
         // Guides cannot record weather alerts; operations can
+        String incidentBody = """
+                {"incidentDateTime": "%s", "incidentType": "Weather damage", "severity": "LOW", "description": "Strong wind damaged a dock"}
+                """.formatted(LocalDateTime.now().minusMinutes(30).withNano(0));
+        String incident = mockMvc.perform(as(guide, post("/api/emergency-incidents")).content(incidentBody))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer incidentId = JsonPath.read(incident, "$.incidentId");
         String alertJson = """
                 {"alertDateTime": "%s", "location": "Lagoon mouth", "weatherCondition": "Thunderstorm", "severity": "HIGH"}
-                """.formatted(tripDay.atTime(6, 0));
+                """.formatted(tripDay.atTime(6, 0)).replace("\"severity\": \"HIGH\"", "\"severity\": \"HIGH\", \"affectedIncidentIds\": [" + incidentId + "]");
         mockMvc.perform(as(guide, post("/api/weather-alerts")).content(alertJson)).andExpect(status().isForbidden());
         mockMvc.perform(as(ops, post("/api/weather-alerts")).content(alertJson.replace("HIGH", "EXTREME"))).andExpect(status().isBadRequest());
-        mockMvc.perform(as(ops, post("/api/weather-alerts")).content(alertJson)).andExpect(status().isCreated());
+        String alert = mockMvc.perform(as(ops, post("/api/weather-alerts")).content(alertJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.affectedIncidentIds[0]").value(incidentId))
+                .andReturn().getResponse().getContentAsString();
+        Integer alertId = JsonPath.read(alert, "$.alertId");
 
         // The customer with a booking that day sees it; another customer does not; relations reads all
         mockMvc.perform(as(customer, get("/api/weather-alerts"))).andExpect(jsonPath("$.length()").value(1));
@@ -51,6 +62,8 @@ class SafetyApiTest extends ApiTestSupport {
                 .andExpect(status().isOk());
         mockMvc.perform(as(customer, get("/api/notifications/user/" + customer.id())))
                 .andExpect(jsonPath("$[0].message").value(org.hamcrest.Matchers.containsString("postponed")));
+        mockMvc.perform(as(ops, delete("/api/emergency-incidents/" + incidentId))).andExpect(status().isNoContent());
+        mockMvc.perform(as(ops, get("/api/weather-alerts/" + alertId))).andExpect(jsonPath("$.affectedIncidentIds").isEmpty());
     }
 
     @Test

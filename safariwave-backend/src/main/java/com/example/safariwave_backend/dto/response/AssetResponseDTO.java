@@ -2,6 +2,7 @@ package com.example.safariwave_backend.dto.response;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class AssetResponseDTO {
 
@@ -16,10 +17,14 @@ public class AssetResponseDTO {
     private String description;
     private Integer boatId;
     private String boatName;
+    private List<BoatSummary> boats;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     private Integer createdBy;
+
+    public record BoatSummary(Integer boatId, String boatName) {
+    }
 
     public AssetResponseDTO() {
     }
@@ -110,6 +115,14 @@ public class AssetResponseDTO {
 
     public void setBoatName(String boatName) {
         this.boatName = boatName;
+    }
+
+    public List<BoatSummary> getBoats() {
+        return boats;
+    }
+
+    public void setBoats(List<BoatSummary> boats) {
+        this.boats = boats;
     }
 
     public LocalDateTime getCreatedAt() {

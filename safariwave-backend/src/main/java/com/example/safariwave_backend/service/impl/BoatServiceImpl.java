@@ -133,7 +133,8 @@ public class BoatServiceImpl implements BoatService {
         Boat boat = findBoat(boatId);
         if (permanent) {
             CurrentUser.requireAnyRole(); // ADMIN only
-            if (safariTripRepository.existsByBoat_BoatId(boatId) || assetRepository.existsByBoat_BoatId(boatId)
+            if (safariTripRepository.existsByBoat_BoatId(boatId) || assetRepository.existsByBoats_BoatId(boatId)
+                    || assetRepository.existsByBoat_BoatId(boatId)
                     || maintenanceRepository.existsByBoat_BoatId(boatId) || safetyInspectionRepository.existsByBoat_BoatId(boatId)) {
                 throw new ConflictException(boat.getBoatName() + " has trips, assets or maintenance history. Retire it instead.");
             }

@@ -4,8 +4,10 @@ import com.example.safariwave_backend.dto.request.WeatherAlertRequestDTO;
 import com.example.safariwave_backend.dto.response.WeatherAlertResponseDTO;
 import com.example.safariwave_backend.entity.Booking;
 import com.example.safariwave_backend.entity.WeatherAlert;
+import com.example.safariwave_backend.entity.EmergencyIncident;
 import com.example.safariwave_backend.exception.ResourceNotFoundException;
 import com.example.safariwave_backend.repository.BookingRepository;
+import com.example.safariwave_backend.repository.EmergencyIncidentRepository;
 import com.example.safariwave_backend.repository.WeatherAlertRepository;
 import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.security.Roles;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,10 +43,13 @@ public class WeatherAlertServiceImpl implements WeatherAlertService {
 
     private final WeatherAlertRepository weatherAlertRepository;
     private final BookingRepository bookingRepository;
+    private final EmergencyIncidentRepository incidentRepository;
 
-    public WeatherAlertServiceImpl(WeatherAlertRepository weatherAlertRepository, BookingRepository bookingRepository) {
+    public WeatherAlertServiceImpl(WeatherAlertRepository weatherAlertRepository, BookingRepository bookingRepository,
+                                   EmergencyIncidentRepository incidentRepository) {
         this.weatherAlertRepository = weatherAlertRepository;
         this.bookingRepository = bookingRepository;
+        this.incidentRepository = incidentRepository;
     }
 
     @Override
@@ -127,6 +133,16 @@ public class WeatherAlertServiceImpl implements WeatherAlertService {
         alert.setDescription(dto.getDescription());
         alert.setAlertStatus(SafetyPermissions.oneOf(dto.getAlertStatus(), ALERT_STATUSES, "Alert status", defaultStatus));
         alert.setRemarks(dto.getRemarks());
+        if (dto.getAffectedIncidentIds() != null) {
+            List<Integer> requestedIds = dto.getAffectedIncidentIds().stream().filter(id -> id != null).distinct().toList();
+            List<EmergencyIncident> incidents = incidentRepository.findAllById(requestedIds);
+            if (incidents.size() != requestedIds.size()) {
+                List<Integer> missingIds = requestedIds.stream()
+                        .filter(id -> incidents.stream().noneMatch(incident -> incident.getIncidentId().equals(id))).toList();
+                throw new ResourceNotFoundException("Emergency incident(s) not found with ID(s): " + missingIds);
+            }
+            alert.setAffectedIncidents(new ArrayList<>(incidents));
+        }
     }
 
     private boolean isCustomer() {
@@ -177,6 +193,8 @@ public class WeatherAlertServiceImpl implements WeatherAlertService {
         dto.setCreatedAt(alert.getCreatedAt());
         dto.setUpdatedAt(alert.getUpdatedAt());
         dto.setCreatedBy(alert.getCreatedBy());
+        dto.setAffectedIncidentIds(alert.getAffectedIncidents().stream()
+                .map(EmergencyIncident::getIncidentId).toList());
         return dto;
     }
 }

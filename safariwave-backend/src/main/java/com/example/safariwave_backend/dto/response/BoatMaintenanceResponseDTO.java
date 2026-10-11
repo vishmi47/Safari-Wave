@@ -11,6 +11,7 @@ public class BoatMaintenanceResponseDTO {
     private String boatName;
     private LocalDate inspectionDate;
     private String inspectionFindings;
+    private String inspectedBy;
     private String maintenanceDescription;
     private String maintenanceStatus;
     private BigDecimal maintenanceCost;
@@ -62,6 +63,14 @@ public class BoatMaintenanceResponseDTO {
 
     public void setInspectionFindings(String inspectionFindings) {
         this.inspectionFindings = inspectionFindings;
+    }
+
+    public String getInspectedBy() {
+        return inspectedBy;
+    }
+
+    public void setInspectedBy(String inspectedBy) {
+        this.inspectedBy = inspectedBy;
     }
 
     public String getMaintenanceDescription() {

@@ -1,6 +1,7 @@
 package com.example.safariwave_backend.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class WeatherAlertResponseDTO {
 
@@ -16,6 +17,7 @@ public class WeatherAlertResponseDTO {
     private LocalDateTime updatedAt;
 
     private Integer createdBy;
+    private List<Integer> affectedIncidentIds;
 
     public WeatherAlertResponseDTO() {
     }
@@ -106,5 +108,13 @@ public class WeatherAlertResponseDTO {
 
     public void setCreatedBy(Integer createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public List<Integer> getAffectedIncidentIds() {
+        return affectedIncidentIds;
+    }
+
+    public void setAffectedIncidentIds(List<Integer> affectedIncidentIds) {
+        this.affectedIncidentIds = affectedIncidentIds;
     }
 }

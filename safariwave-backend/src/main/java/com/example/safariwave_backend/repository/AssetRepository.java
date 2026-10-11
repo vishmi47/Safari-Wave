@@ -23,6 +23,8 @@ public interface AssetRepository extends JpaRepository<Asset, Integer> {
 
     boolean existsByBoat_BoatId(Integer boatId);
 
+    boolean existsByBoats_BoatId(Integer boatId);
+
     // Paged search by name or type, optionally by status
     @Query("""
             SELECT a FROM Asset a

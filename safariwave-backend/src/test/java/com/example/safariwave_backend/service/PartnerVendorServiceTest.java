@@ -6,6 +6,7 @@ import com.example.safariwave_backend.dto.response.PartnerVendorResponseDTO;
 import com.example.safariwave_backend.entity.PartnerVendorEntity;
 import com.example.safariwave_backend.enums.PartnerVendorStatus;
 import com.example.safariwave_backend.repository.PartnerVendorRepository;
+import com.example.safariwave_backend.repository.PartnerVendorAgreementRepository;
 import com.example.safariwave_backend.service.impl.PartnerVendorServiceImpl;
 import com.example.safariwave_backend.security.AuthenticatedUser;
 import com.example.safariwave_backend.security.Roles;
@@ -33,6 +34,9 @@ class PartnerVendorServiceTest {
 
     @Mock
     private PartnerVendorRepository partnerVendorRepository;
+
+    @Mock
+    private PartnerVendorAgreementRepository partnerVendorAgreementRepository;
 
     @Mock
     private PartnerVendorNotificationService partnerVendorNotificationService;

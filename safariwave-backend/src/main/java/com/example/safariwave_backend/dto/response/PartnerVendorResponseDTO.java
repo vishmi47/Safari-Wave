@@ -4,6 +4,7 @@ import com.example.safariwave_backend.enums.PartnerVendorStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class PartnerVendorResponseDTO {
 
@@ -22,6 +23,7 @@ public class PartnerVendorResponseDTO {
     private LocalDate contractEndDate;
     private String agreementDetails;
     private String documentUrl;
+    private List<PartnerVendorAgreementResponseDTO> agreements;
     private PartnerVendorStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -75,6 +77,9 @@ public class PartnerVendorResponseDTO {
 
     public String getDocumentUrl() { return documentUrl; }
     public void setDocumentUrl(String documentUrl) { this.documentUrl = documentUrl; }
+
+    public List<PartnerVendorAgreementResponseDTO> getAgreements() { return agreements; }
+    public void setAgreements(List<PartnerVendorAgreementResponseDTO> agreements) { this.agreements = agreements; }
 
     public PartnerVendorStatus getStatus() { return status; }
     public void setStatus(PartnerVendorStatus status) { this.status = status; }

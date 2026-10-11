@@ -70,4 +70,53 @@ class PartnerVendorApiTest extends ApiTestSupport {
         mockMvc.perform(as(admin, put("/api/partners-vendors/" + hotelId + "/terminate"))).andExpect(jsonPath("$.status").value("TERMINATED"));
         mockMvc.perform(as(admin, delete("/api/partners-vendors/" + hotelId + "?permanent=true"))).andExpect(status().isNoContent());
     }
+
+    @Test
+    void vendorCanHaveMultipleAgreements_andAgreementsHaveAdminCrud() throws Exception {
+        TestUser admin = createUser(Roles.ADMIN);
+        TestUser finance = createUser(Roles.FINANCE);
+        TestUser ops = createUser(Roles.OPERATIONS);
+        String vendor = mockMvc.perform(as(admin, post("/api/partners-vendors"))
+                        .content(partner("Agreement Hotel", "HOTEL", "agreement@test.lk", "/legacy.pdf")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.agreements.length()").value(1))
+                .andReturn().getResponse().getContentAsString();
+        Integer vendorId = JsonPath.read(vendor, "$.partnerVendorId");
+        Integer originalAgreementId = JsonPath.read(vendor, "$.agreements[0].agreementId");
+        String agreementBody = """
+                {"startDate":"%s","endDate":"%s","terms":"Room allocation and seasonal rates"}
+                """.formatted(LocalDate.now().plusMonths(1), LocalDate.now().plusMonths(6));
+
+        String additional = mockMvc.perform(as(admin, post("/api/partners-vendors/" + vendorId + "/agreements"))
+                        .content(agreementBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.terms").value("Room allocation and seasonal rates"))
+                .andReturn().getResponse().getContentAsString();
+        Integer agreementId = JsonPath.read(additional, "$.agreementId");
+
+        mockMvc.perform(as(finance, get("/api/partners-vendors/" + vendorId + "/agreements")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+        mockMvc.perform(as(ops, get("/api/partners-vendors/" + vendorId + "/agreements")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(as(finance, post("/api/partners-vendors/" + vendorId + "/agreements"))
+                        .content(agreementBody))
+                .andExpect(status().isForbidden());
+
+        String updatedAgreement = """
+                {"startDate":"%s","endDate":"%s","terms":"Updated seasonal rates"}
+                """.formatted(LocalDate.now().plusMonths(1), LocalDate.now().plusMonths(8));
+        mockMvc.perform(as(admin, put("/api/partners-vendors/" + vendorId + "/agreements/" + agreementId))
+                        .content(updatedAgreement))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.terms").value("Updated seasonal rates"));
+        mockMvc.perform(as(admin, delete("/api/partners-vendors/" + vendorId + "/agreements/" + agreementId)))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(as(admin, get("/api/partners-vendors/" + vendorId + "/agreements")))
+                .andExpect(jsonPath("$.length()").value(1));
+        mockMvc.perform(as(admin, delete("/api/partners-vendors/" + vendorId + "/agreements/" + originalAgreementId)))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(as(admin, get("/api/partners-vendors/" + vendorId + "/agreements")))
+                .andExpect(jsonPath("$.length()").value(0));
+    }
 }

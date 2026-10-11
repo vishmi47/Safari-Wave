@@ -16,6 +16,8 @@ public class BoatMaintenanceRequestDTO {
     private LocalDate inspectionDate;
     @Size(max = 2000)
     private String inspectionFindings;
+    @Size(max = 120)
+    private String inspectedBy;
     @Size(max = 2000)
     private String maintenanceDescription;
     private String maintenanceStatus;
@@ -50,6 +52,14 @@ public class BoatMaintenanceRequestDTO {
 
     public void setInspectionFindings(String inspectionFindings) {
         this.inspectionFindings = inspectionFindings;
+    }
+
+    public String getInspectedBy() {
+        return inspectedBy;
+    }
+
+    public void setInspectedBy(String inspectedBy) {
+        this.inspectedBy = inspectedBy;
     }
 
     public String getMaintenanceDescription() {

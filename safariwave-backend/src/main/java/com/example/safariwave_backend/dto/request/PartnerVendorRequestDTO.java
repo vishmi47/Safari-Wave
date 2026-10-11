@@ -2,11 +2,12 @@ package com.example.safariwave_backend.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.Valid;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class PartnerVendorRequestDTO {
 
@@ -47,17 +48,17 @@ public class PartnerVendorRequestDTO {
     @Size(max = 80, message = "Contract number must be under 80 characters")
     private String contractNumber;
 
-    @NotNull(message = "Contract start date is required")
     private LocalDate contractStartDate;
 
-    @NotNull(message = "Contract end date is required")
     private LocalDate contractEndDate;
 
     @Size(max = 2000, message = "Agreement details must be under 2000 characters")
     private String agreementDetails;
 
-    @NotBlank(message = "Document upload is required")
     private String documentUrl;
+
+    @Valid
+    private List<PartnerVendorAgreementRequestDTO> agreements;
 
     public PartnerVendorRequestDTO() {
     }
@@ -103,4 +104,7 @@ public class PartnerVendorRequestDTO {
 
     public String getDocumentUrl() { return documentUrl; }
     public void setDocumentUrl(String documentUrl) { this.documentUrl = documentUrl; }
+
+    public List<PartnerVendorAgreementRequestDTO> getAgreements() { return agreements; }
+    public void setAgreements(List<PartnerVendorAgreementRequestDTO> agreements) { this.agreements = agreements; }
 }

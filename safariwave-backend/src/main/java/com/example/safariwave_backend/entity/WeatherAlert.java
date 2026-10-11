@@ -3,6 +3,8 @@ package com.example.safariwave_backend.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "weather_alert")
@@ -33,6 +35,16 @@ public class WeatherAlert {
 
     @Column(name = "remarks", columnDefinition = "TEXT")
     private String remarks;
+
+    @ManyToMany
+    @JoinTable(
+            name = "weather_alert_affects_incident",
+            joinColumns = @JoinColumn(name = "alert_id"),
+            inverseJoinColumns = @JoinColumn(name = "incident_id"),
+            uniqueConstraints = @UniqueConstraint(name = "uk_weather_alert_incident", columnNames = {"alert_id", "incident_id"}),
+            indexes = @Index(name = "idx_weather_alert_incident_incident", columnList = "incident_id")
+    )
+    private List<EmergencyIncident> affectedIncidents = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -121,6 +133,14 @@ public class WeatherAlert {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public List<EmergencyIncident> getAffectedIncidents() {
+        return affectedIncidents;
+    }
+
+    public void setAffectedIncidents(List<EmergencyIncident> affectedIncidents) {
+        this.affectedIncidents = affectedIncidents == null ? new ArrayList<>() : new ArrayList<>(affectedIncidents);
     }
 
     public LocalDateTime getCreatedAt() {

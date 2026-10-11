@@ -1,6 +1,8 @@
 package com.example.safariwave_backend.controller;
 
 import com.example.safariwave_backend.dto.request.PartnerVendorRequestDTO;
+import com.example.safariwave_backend.dto.request.PartnerVendorAgreementRequestDTO;
+import com.example.safariwave_backend.dto.response.PartnerVendorAgreementResponseDTO;
 import com.example.safariwave_backend.dto.response.PartnerVendorResponseDTO;
 import com.example.safariwave_backend.enums.PartnerVendorStatus;
 import com.example.safariwave_backend.exception.BadRequestException;
@@ -96,6 +98,33 @@ public class PartnerVendorController {
     @PreAuthorize("hasAnyRole('GENERAL_MANAGER', 'ADMIN')")
     public ResponseEntity<PartnerVendorResponseDTO> terminatePartnerVendor(@PathVariable Long id) {
         return ResponseEntity.ok(partnerVendorService.terminatePartnerVendor(id));
+    }
+
+    @GetMapping("/{id}/agreements")
+    public ResponseEntity<List<PartnerVendorAgreementResponseDTO>> getAgreements(@PathVariable Long id) {
+        return ResponseEntity.ok(partnerVendorService.getAgreements(id));
+    }
+
+    @PostMapping("/{id}/agreements")
+    @PreAuthorize("hasAnyRole('GENERAL_MANAGER', 'ADMIN')")
+    public ResponseEntity<PartnerVendorAgreementResponseDTO> createAgreement(
+            @PathVariable Long id, @Valid @RequestBody PartnerVendorAgreementRequestDTO dto) {
+        return new ResponseEntity<>(partnerVendorService.createAgreement(id, dto), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}/agreements/{agreementId}")
+    @PreAuthorize("hasAnyRole('GENERAL_MANAGER', 'ADMIN')")
+    public ResponseEntity<PartnerVendorAgreementResponseDTO> updateAgreement(
+            @PathVariable Long id, @PathVariable Long agreementId,
+            @Valid @RequestBody PartnerVendorAgreementRequestDTO dto) {
+        return ResponseEntity.ok(partnerVendorService.updateAgreement(id, agreementId, dto));
+    }
+
+    @DeleteMapping("/{id}/agreements/{agreementId}")
+    @PreAuthorize("hasAnyRole('GENERAL_MANAGER', 'ADMIN')")
+    public ResponseEntity<Void> deleteAgreement(@PathVariable Long id, @PathVariable Long agreementId) {
+        partnerVendorService.deleteAgreement(id, agreementId);
+        return ResponseEntity.noContent().build();
     }
 
     // Stores the agreement document (PDF, JPG or PNG) and returns the URL to save as documentUrl

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class WeatherAlertRequestDTO {
 
@@ -22,6 +23,7 @@ public class WeatherAlertRequestDTO {
     private String alertStatus;
     @Size(max = 1000)
     private String remarks;
+    private List<Integer> affectedIncidentIds;
 
     public WeatherAlertRequestDTO() {
     }
@@ -80,5 +82,13 @@ public class WeatherAlertRequestDTO {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public List<Integer> getAffectedIncidentIds() {
+        return affectedIncidentIds;
+    }
+
+    public void setAffectedIncidentIds(List<Integer> affectedIncidentIds) {
+        this.affectedIncidentIds = affectedIncidentIds;
     }
 }

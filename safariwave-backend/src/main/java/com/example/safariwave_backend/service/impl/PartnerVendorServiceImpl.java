@@ -1,13 +1,17 @@
 package com.example.safariwave_backend.service.impl;
 
+import com.example.safariwave_backend.dto.request.PartnerVendorAgreementRequestDTO;
 import com.example.safariwave_backend.dto.request.PartnerVendorRequestDTO;
+import com.example.safariwave_backend.dto.response.PartnerVendorAgreementResponseDTO;
 import com.example.safariwave_backend.dto.response.PartnerVendorResponseDTO;
+import com.example.safariwave_backend.entity.PartnerVendorAgreementEntity;
 import com.example.safariwave_backend.entity.PartnerVendorEntity;
 import com.example.safariwave_backend.enums.PartnerVendorStatus;
 import com.example.safariwave_backend.exception.BadRequestException;
 import com.example.safariwave_backend.exception.DuplicateResourceException;
 import com.example.safariwave_backend.exception.ResourceNotFoundException;
 import com.example.safariwave_backend.repository.PartnerVendorRepository;
+import com.example.safariwave_backend.repository.PartnerVendorAgreementRepository;
 import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.PartnerVendorNotificationService;
@@ -32,6 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -53,11 +58,14 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
     private static final String DOCUMENT_URL_PREFIX = "/api/partners-vendors/documents/";
 
     private final PartnerVendorRepository partnerVendorRepository;
+    private final PartnerVendorAgreementRepository agreementRepository;
     private final PartnerVendorNotificationService notificationService;
 
     public PartnerVendorServiceImpl(PartnerVendorRepository partnerVendorRepository,
+                                    PartnerVendorAgreementRepository agreementRepository,
                                     PartnerVendorNotificationService notificationService) {
         this.partnerVendorRepository = partnerVendorRepository;
+        this.agreementRepository = agreementRepository;
         this.notificationService = notificationService;
     }
 
@@ -78,19 +86,31 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
         entity.setCreatedBy(CurrentUser.find().map(user -> user.userId()).orElse(null));
 
         PartnerVendorEntity saved = partnerVendorRepository.save(entity);
+        if (dto.getAgreements() != null && !dto.getAgreements().isEmpty()) {
+            dto.getAgreements().forEach(agreement -> saveAgreement(saved, agreement, null));
+        } else if (dto.getContractStartDate() != null && dto.getContractEndDate() != null) {
+            PartnerVendorAgreementRequestDTO agreement = new PartnerVendorAgreementRequestDTO();
+            agreement.setStartDate(dto.getContractStartDate());
+            agreement.setEndDate(dto.getContractEndDate());
+            agreement.setTerms(dto.getAgreementDetails() == null || dto.getAgreementDetails().isBlank()
+                    ? (dto.getContractNumber() == null || dto.getContractNumber().isBlank()
+                    ? "Legacy partner agreement" : dto.getContractNumber()) : dto.getAgreementDetails());
+            agreement.setDocumentUrl(dto.getDocumentUrl());
+            saveAgreement(saved, agreement, null);
+        } else {
+            throw new BadRequestException("At least one agreement with start date, end date, and terms is required.");
+        }
         notificationService.notifyRegistration(saved);
         return toResponse(saved);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<PartnerVendorResponseDTO> getAllPartnerVendors() {
         List<String> types = visibleTypes();
         return partnerVendorRepository.findAll().stream().filter(entity -> canSee(entity, types)).map(this::toResponse).toList();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PartnerVendorResponseDTO getPartnerVendorById(Long id) {
         List<String> types = visibleTypes();
         PartnerVendorEntity entity = findById(id);
@@ -101,14 +121,12 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<PartnerVendorResponseDTO> getPartnerVendorsByStatus(PartnerVendorStatus status) {
         List<String> types = visibleTypes();
         return partnerVendorRepository.findByStatus(status).stream().filter(entity -> canSee(entity, types)).map(this::toResponse).toList();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Page<PartnerVendorResponseDTO> searchPartnerVendors(String query, String status, String type, int page, int size) {
         List<String> visible = visibleTypes();
         List<String> types = visible == null ? PARTNER_TYPES : visible;
@@ -168,6 +186,7 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
         if (entity.getStatus() != PartnerVendorStatus.INACTIVE && entity.getStatus() != PartnerVendorStatus.TERMINATED) {
             throw new BadRequestException("Deactivate or terminate the partner before deleting it permanently.");
         }
+        agreementRepository.deleteAllByPartnerVendorPartnerVendorId(id);
         partnerVendorRepository.delete(entity);
     }
 
@@ -184,6 +203,53 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
     @Override
     public PartnerVendorResponseDTO terminatePartnerVendor(Long id) {
         return changeStatus(id, PartnerVendorStatus.TERMINATED);
+    }
+
+    @Override
+    public List<PartnerVendorAgreementResponseDTO> getAgreements(Long partnerVendorId) {
+        PartnerVendorEntity vendor = findById(partnerVendorId);
+        requireVisible(vendor);
+        return toResponse(vendor).getAgreements();
+    }
+
+    @Override
+    public PartnerVendorAgreementResponseDTO createAgreement(Long partnerVendorId, PartnerVendorAgreementRequestDTO dto) {
+        CurrentUser.requireAnyRole();
+        PartnerVendorEntity vendor = findById(partnerVendorId);
+        validateAgreementDates(dto);
+        return toAgreementResponse(saveAgreement(vendor, dto, null));
+    }
+
+    @Override
+    public PartnerVendorAgreementResponseDTO updateAgreement(Long partnerVendorId, Long agreementId, PartnerVendorAgreementRequestDTO dto) {
+        CurrentUser.requireAnyRole();
+        PartnerVendorEntity vendor = findById(partnerVendorId);
+        validateAgreementDates(dto);
+        PartnerVendorAgreementEntity agreement = findAgreement(partnerVendorId, agreementId);
+        agreement.setStartDate(dto.getStartDate());
+        agreement.setEndDate(dto.getEndDate());
+        agreement.setTerms(dto.getTerms());
+        if (dto.getDocumentUrl() != null) {
+            agreement.setDocumentUrl(dto.getDocumentUrl());
+        }
+        return toAgreementResponse(agreementRepository.save(agreement));
+    }
+
+    @Override
+    public void deleteAgreement(Long partnerVendorId, Long agreementId) {
+        CurrentUser.requireAnyRole();
+        PartnerVendorEntity vendor = findById(partnerVendorId);
+        PartnerVendorAgreementEntity agreement = findAgreement(partnerVendorId, agreementId);
+        if (Objects.equals(vendor.getContractStartDate(), agreement.getStartDate())
+                && Objects.equals(vendor.getContractEndDate(), agreement.getEndDate())) {
+            vendor.setContractNumber(null);
+            vendor.setContractStartDate(null);
+            vendor.setContractEndDate(null);
+            vendor.setAgreementDetails(null);
+            vendor.setDocumentUrl(null);
+            partnerVendorRepository.save(vendor);
+        }
+        agreementRepository.delete(agreement);
     }
 
     @Override
@@ -218,7 +284,12 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
             throw new ResourceNotFoundException("Document not found.");
         }
         List<String> types = visibleTypes();
-        PartnerVendorEntity owner = partnerVendorRepository.findFirstByDocumentUrl(DOCUMENT_URL_PREFIX + filename).orElse(null);
+        String documentUrl = DOCUMENT_URL_PREFIX + filename;
+        PartnerVendorEntity owner = partnerVendorRepository.findFirstByDocumentUrl(documentUrl).orElse(null);
+        if (owner == null) {
+            owner = agreementRepository.findFirstByDocumentUrl(documentUrl)
+                    .map(agreement -> agreement.getPartnerVendor()).orElse(null);
+        }
         // A document not yet attached to a partner is only visible to the admin who uploaded it
         if (owner == null ? types != null : !canSee(owner, types)) {
             throw new AccessDeniedException("You are not authorized to view this document.");
@@ -271,6 +342,38 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
         }
     }
 
+    private void validateAgreementDates(PartnerVendorAgreementRequestDTO dto) {
+        if (dto.getStartDate() == null || dto.getEndDate() == null || dto.getTerms() == null || dto.getTerms().isBlank()) {
+            throw new BadRequestException("Agreement start date, end date, and terms are required.");
+        }
+        if (dto.getStartDate().isAfter(dto.getEndDate())) {
+            throw new BadRequestException("Agreement start date cannot be after end date.");
+        }
+    }
+
+    private PartnerVendorAgreementEntity saveAgreement(PartnerVendorEntity vendor, PartnerVendorAgreementRequestDTO dto,
+                                                        PartnerVendorAgreementEntity agreement) {
+        validateAgreementDates(dto);
+        PartnerVendorAgreementEntity savedAgreement = agreement == null ? new PartnerVendorAgreementEntity() : agreement;
+        savedAgreement.setPartnerVendor(vendor);
+        savedAgreement.setStartDate(dto.getStartDate());
+        savedAgreement.setEndDate(dto.getEndDate());
+        savedAgreement.setTerms(dto.getTerms());
+        savedAgreement.setDocumentUrl(dto.getDocumentUrl());
+        return agreementRepository.save(savedAgreement);
+    }
+
+    private PartnerVendorAgreementEntity findAgreement(Long partnerVendorId, Long agreementId) {
+        return agreementRepository.findByAgreementIdAndPartnerVendorPartnerVendorId(agreementId, partnerVendorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agreement not found for this partner/vendor."));
+    }
+
+    private void requireVisible(PartnerVendorEntity vendor) {
+        if (!canSee(vendor, visibleTypes())) {
+            throw new AccessDeniedException("You are not authorized to view this partner.");
+        }
+    }
+
     private void copyRequestToEntity(PartnerVendorRequestDTO dto, PartnerVendorEntity entity) {
         String type = normalizeType(dto.getPartnerType());
         if (!PARTNER_TYPES.contains(type)) {
@@ -285,11 +388,11 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
         entity.setAddress(dto.getAddress());
         entity.setServiceType(dto.getServiceType());
         entity.setServiceDescription(dto.getServiceDescription());
-        entity.setContractNumber(dto.getContractNumber());
-        entity.setContractStartDate(dto.getContractStartDate());
-        entity.setContractEndDate(dto.getContractEndDate());
-        entity.setAgreementDetails(dto.getAgreementDetails());
-        entity.setDocumentUrl(dto.getDocumentUrl());
+        if (dto.getContractNumber() != null) entity.setContractNumber(dto.getContractNumber());
+        if (dto.getContractStartDate() != null) entity.setContractStartDate(dto.getContractStartDate());
+        if (dto.getContractEndDate() != null) entity.setContractEndDate(dto.getContractEndDate());
+        if (dto.getAgreementDetails() != null) entity.setAgreementDetails(dto.getAgreementDetails());
+        if (dto.getDocumentUrl() != null) entity.setDocumentUrl(dto.getDocumentUrl());
     }
 
     private PartnerVendorResponseDTO toResponse(PartnerVendorEntity entity) {
@@ -309,10 +412,42 @@ public class PartnerVendorServiceImpl implements PartnerVendorService {
         response.setContractEndDate(entity.getContractEndDate());
         response.setAgreementDetails(entity.getAgreementDetails());
         response.setDocumentUrl(entity.getDocumentUrl());
+        List<PartnerVendorAgreementResponseDTO> agreements =
+                agreementRepository.findAllByPartnerVendorPartnerVendorIdOrderByStartDateDescAgreementIdDesc(entity.getPartnerVendorId())
+                        .stream().map(this::toAgreementResponse).toList();
+        if (agreements.isEmpty() && entity.getContractStartDate() != null && entity.getContractEndDate() != null) {
+            PartnerVendorAgreementEntity legacy = new PartnerVendorAgreementEntity();
+            legacy.setPartnerVendor(entity);
+            legacy.setStartDate(entity.getContractStartDate());
+            legacy.setEndDate(entity.getContractEndDate());
+            String terms = entity.getAgreementDetails() == null ? entity.getContractNumber() : entity.getAgreementDetails();
+            legacy.setTerms(terms == null || terms.isBlank() ? "Legacy partner agreement" : terms);
+            legacy.setDocumentUrl(entity.getDocumentUrl());
+            PartnerVendorAgreementEntity migrated = agreementRepository.save(legacy);
+            agreements = migrated == null ? List.of(toAgreementResponse(legacy)) : List.of(toAgreementResponse(migrated));
+        }
+        if (!agreements.isEmpty()) {
+            PartnerVendorAgreementResponseDTO primaryAgreement = agreements.get(0);
+            if (response.getContractStartDate() == null) response.setContractStartDate(primaryAgreement.getStartDate());
+            if (response.getContractEndDate() == null) response.setContractEndDate(primaryAgreement.getEndDate());
+            if (response.getAgreementDetails() == null) response.setAgreementDetails(primaryAgreement.getTerms());
+            if (response.getDocumentUrl() == null) response.setDocumentUrl(primaryAgreement.getDocumentUrl());
+        }
+        response.setAgreements(agreements);
         response.setStatus(entity.getStatus());
         response.setCreatedAt(entity.getCreatedAt());
         response.setUpdatedAt(entity.getUpdatedAt());
         response.setCreatedBy(entity.getCreatedBy());
+        return response;
+    }
+
+    private PartnerVendorAgreementResponseDTO toAgreementResponse(PartnerVendorAgreementEntity entity) {
+        PartnerVendorAgreementResponseDTO response = new PartnerVendorAgreementResponseDTO();
+        response.setAgreementId(entity.getAgreementId());
+        response.setStartDate(entity.getStartDate());
+        response.setEndDate(entity.getEndDate());
+        response.setTerms(entity.getTerms());
+        response.setDocumentUrl(entity.getDocumentUrl());
         return response;
     }
 }

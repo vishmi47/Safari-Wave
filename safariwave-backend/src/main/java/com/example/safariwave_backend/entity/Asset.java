@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "asset")
@@ -41,6 +43,16 @@ public class Asset {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "boat_id")
     private Boat boat;
+
+    @ManyToMany
+    @JoinTable(
+            name = "boat_asset",
+            joinColumns = @JoinColumn(name = "asset_id"),
+            inverseJoinColumns = @JoinColumn(name = "boat_id"),
+            uniqueConstraints = @UniqueConstraint(name = "uk_boat_asset", columnNames = {"asset_id", "boat_id"}),
+            indexes = @Index(name = "idx_boat_asset_boat", columnList = "boat_id")
+    )
+    private List<Boat> boats = new ArrayList<>();
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -145,6 +157,14 @@ public class Asset {
 
     public void setBoat(Boat boat) {
         this.boat = boat;
+    }
+
+    public List<Boat> getBoats() {
+        return boats;
+    }
+
+    public void setBoats(List<Boat> boats) {
+        this.boats = boats == null ? new ArrayList<>() : new ArrayList<>(boats);
     }
 
     public LocalDateTime getCreatedAt() {

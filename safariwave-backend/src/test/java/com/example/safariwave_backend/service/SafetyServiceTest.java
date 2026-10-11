@@ -73,9 +73,9 @@ class SafetyServiceTest {
 
     @BeforeEach
     void setUp() {
-        weatherService = new WeatherAlertServiceImpl(weatherAlertRepository, bookingRepository);
+        weatherService = new WeatherAlertServiceImpl(weatherAlertRepository, bookingRepository, incidentRepository);
         inspectionService = new SafetyInspectionServiceImpl(safetyInspectionRepository, boatRepository, safariTripRepository, notificationService);
-        incidentService = new EmergencyIncidentServiceImpl(incidentRepository, safariTripRepository, notificationService);
+        incidentService = new EmergencyIncidentServiceImpl(incidentRepository, safariTripRepository, weatherAlertRepository, notificationService);
     }
 
     @AfterEach

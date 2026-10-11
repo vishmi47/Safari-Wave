@@ -24,6 +24,9 @@ public class BoatMaintenanceRecord {
     @Column(name = "inspection_findings", columnDefinition = "TEXT")
     private String inspectionFindings;
 
+    @Column(name = "inspected_by", length = 120)
+    private String inspectedBy;
+
     @Column(name = "maintenance_description", columnDefinition = "TEXT")
     private String maintenanceDescription;
 
@@ -94,6 +97,14 @@ public class BoatMaintenanceRecord {
 
     public void setInspectionFindings(String inspectionFindings) {
         this.inspectionFindings = inspectionFindings;
+    }
+
+    public String getInspectedBy() {
+        return inspectedBy;
+    }
+
+    public void setInspectedBy(String inspectedBy) {
+        this.inspectedBy = inspectedBy;
     }
 
     public String getMaintenanceDescription() {

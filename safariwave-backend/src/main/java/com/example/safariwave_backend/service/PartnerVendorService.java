@@ -1,6 +1,8 @@
 package com.example.safariwave_backend.service;
 
 import com.example.safariwave_backend.dto.request.PartnerVendorRequestDTO;
+import com.example.safariwave_backend.dto.request.PartnerVendorAgreementRequestDTO;
+import com.example.safariwave_backend.dto.response.PartnerVendorAgreementResponseDTO;
 import com.example.safariwave_backend.dto.response.PartnerVendorResponseDTO;
 import com.example.safariwave_backend.enums.PartnerVendorStatus;
 import org.springframework.core.io.Resource;
@@ -37,6 +39,14 @@ public interface PartnerVendorService {
     PartnerVendorResponseDTO rejectPartnerVendor(Long id);
 
     PartnerVendorResponseDTO terminatePartnerVendor(Long id);
+
+    List<PartnerVendorAgreementResponseDTO> getAgreements(Long partnerVendorId);
+
+    PartnerVendorAgreementResponseDTO createAgreement(Long partnerVendorId, PartnerVendorAgreementRequestDTO dto);
+
+    PartnerVendorAgreementResponseDTO updateAgreement(Long partnerVendorId, Long agreementId, PartnerVendorAgreementRequestDTO dto);
+
+    void deleteAgreement(Long partnerVendorId, Long agreementId);
 
     /** Stores an agreement document privately and returns the URL to save in documentUrl. */
     String storeDocument(MultipartFile file);

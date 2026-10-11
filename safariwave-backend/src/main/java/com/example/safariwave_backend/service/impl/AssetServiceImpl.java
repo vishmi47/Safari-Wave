@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -131,10 +134,17 @@ public class AssetServiceImpl implements AssetService {
     }
 
     private void copyRequestToEntity(AssetRequestDTO dto, Asset asset, String defaultCondition, String defaultStatus, String defaultMaintenance) {
-        Boat boat = null;
-        if (dto.getBoatId() != null) {
-            boat = boatRepository.findById(dto.getBoatId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Boat not found with id: " + dto.getBoatId()));
+        List<Integer> boatIds = new ArrayList<>();
+        if (dto.getBoatIds() != null) {
+            boatIds.addAll(dto.getBoatIds());
+        }
+        if (dto.getBoatId() != null) boatIds.add(dto.getBoatId());
+        List<Integer> distinctBoatIds = boatIds.stream().distinct().toList();
+        List<Boat> boats = boatRepository.findAllById(distinctBoatIds);
+        if (boats.size() != distinctBoatIds.size()) {
+            List<Integer> missing = distinctBoatIds.stream()
+                    .filter(id -> boats.stream().noneMatch(boat -> boat.getBoatId().equals(id))).toList();
+            throw new ResourceNotFoundException("Boat(s) not found with ID(s): " + missing);
         }
         asset.setAssetName(dto.getAssetName().trim());
         asset.setAssetType(dto.getAssetType().trim());
@@ -145,7 +155,9 @@ public class AssetServiceImpl implements AssetService {
         asset.setMaintenanceStatus(dto.getMaintenanceStatus() == null ? defaultMaintenance
                 : requireOneOf(dto.getMaintenanceStatus(), MAINTENANCE_STATUSES, "Maintenance status"));
         asset.setDescription(dto.getDescription());
-        asset.setBoat(boat);
+        asset.setBoats(boats);
+        // Preserve the former single-boat column during rollout; the join table is now authoritative.
+        asset.setBoat(boats.isEmpty() ? null : boats.get(0));
     }
 
     private String requireOneOf(String value, List<String> allowed, String label) {
@@ -172,8 +184,14 @@ public class AssetServiceImpl implements AssetService {
         dto.setPurchaseDate(asset.getPurchaseDate());
         dto.setMaintenanceStatus(asset.getMaintenanceStatus());
         dto.setDescription(asset.getDescription());
-        dto.setBoatId(asset.getBoat() != null ? asset.getBoat().getBoatId() : null);
-        dto.setBoatName(asset.getBoat() != null ? asset.getBoat().getBoatName() : null);
+        Map<Integer, Boat> assignedBoats = new LinkedHashMap<>();
+        asset.getBoats().forEach(boat -> assignedBoats.put(boat.getBoatId(), boat));
+        if (asset.getBoat() != null) assignedBoats.putIfAbsent(asset.getBoat().getBoatId(), asset.getBoat());
+        List<AssetResponseDTO.BoatSummary> summaries = assignedBoats.values().stream()
+                .map(boat -> new AssetResponseDTO.BoatSummary(boat.getBoatId(), boat.getBoatName())).toList();
+        dto.setBoats(summaries);
+        dto.setBoatId(summaries.isEmpty() ? null : summaries.get(0).boatId());
+        dto.setBoatName(summaries.stream().map(AssetResponseDTO.BoatSummary::boatName).collect(Collectors.joining(", ")));
         dto.setCreatedAt(asset.getCreatedAt());
         dto.setUpdatedAt(asset.getUpdatedAt());
         dto.setCreatedBy(asset.getCreatedBy());

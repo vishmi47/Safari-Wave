@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDate;
+import java.util.List;
 
 public class AssetRequestDTO {
 
@@ -26,6 +27,7 @@ public class AssetRequestDTO {
     @Size(max = 2000)
     private String description;
     private Integer boatId;
+    private List<@Min(1) Integer> boatIds;
 
     public AssetRequestDTO() {
     }
@@ -100,5 +102,13 @@ public class AssetRequestDTO {
 
     public void setBoatId(Integer boatId) {
         this.boatId = boatId;
+    }
+
+    public List<Integer> getBoatIds() {
+        return boatIds;
+    }
+
+    public void setBoatIds(List<Integer> boatIds) {
+        this.boatIds = boatIds;
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface WeatherAlertRepository extends JpaRepository<WeatherAlert, Integer> {
 
+    List<WeatherAlert> findDistinctByAffectedIncidents_IncidentId(Integer incidentId);
+
     List<WeatherAlert> findBySeverity(String severity);
 
     List<WeatherAlert> findByAlertStatus(String alertStatus);

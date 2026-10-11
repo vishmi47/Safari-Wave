@@ -7,6 +7,7 @@ import com.example.safariwave_backend.entity.SafariTrip;
 import com.example.safariwave_backend.exception.ResourceNotFoundException;
 import com.example.safariwave_backend.repository.EmergencyIncidentRepository;
 import com.example.safariwave_backend.repository.SafariTripRepository;
+import com.example.safariwave_backend.repository.WeatherAlertRepository;
 import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.EmergencyIncidentService;
@@ -33,12 +34,14 @@ public class EmergencyIncidentServiceImpl implements EmergencyIncidentService {
 
     private final EmergencyIncidentRepository incidentRepository;
     private final SafariTripRepository safariTripRepository;
+    private final WeatherAlertRepository weatherAlertRepository;
     private final NotificationService notificationService;
 
     public EmergencyIncidentServiceImpl(EmergencyIncidentRepository incidentRepository, SafariTripRepository safariTripRepository,
-                                        NotificationService notificationService) {
+                                        WeatherAlertRepository weatherAlertRepository, NotificationService notificationService) {
         this.incidentRepository = incidentRepository;
         this.safariTripRepository = safariTripRepository;
+        this.weatherAlertRepository = weatherAlertRepository;
         this.notificationService = notificationService;
     }
 
@@ -104,7 +107,12 @@ public class EmergencyIncidentServiceImpl implements EmergencyIncidentService {
     @Override
     public void deleteEmergencyIncident(Integer incidentId) {
         SafetyPermissions.requireCanDelete();
-        incidentRepository.delete(findIncident(incidentId));
+        EmergencyIncident incident = findIncident(incidentId);
+        weatherAlertRepository.findDistinctByAffectedIncidents_IncidentId(incidentId).forEach(alert -> {
+            alert.getAffectedIncidents().removeIf(affected -> affected.getIncidentId().equals(incidentId));
+            weatherAlertRepository.save(alert);
+        });
+        incidentRepository.delete(incident);
     }
 
     private void copyRequestToEntity(EmergencyIncidentRequestDTO dto, EmergencyIncident incident, String defaultStatus) {

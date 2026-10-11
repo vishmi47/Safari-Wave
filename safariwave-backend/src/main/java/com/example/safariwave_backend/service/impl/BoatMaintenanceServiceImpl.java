@@ -54,6 +54,9 @@ public class BoatMaintenanceServiceImpl implements BoatMaintenanceService {
 
         BoatMaintenanceRecord record = new BoatMaintenanceRecord();
         copyRequestToEntity(dto, record, boat);
+        if (record.getInspectedBy() == null || record.getInspectedBy().isBlank()) {
+            record.setInspectedBy(CurrentUser.get().getName());
+        }
         record.setCreatedBy(CurrentUser.id());
         syncBoatStatus(record);
 
@@ -104,6 +107,7 @@ public class BoatMaintenanceServiceImpl implements BoatMaintenanceService {
         record.setBoat(boat);
         record.setInspectionDate(LocalDate.now());
         record.setInspectionFindings(dto.getDescription().trim());
+        record.setInspectedBy(CurrentUser.get().getName());
         record.setMaintenanceStatus("OPEN");
         record.setRemarks("Reported by " + CurrentUser.get().getName());
         record.setCreatedBy(CurrentUser.id());
@@ -135,6 +139,7 @@ public class BoatMaintenanceServiceImpl implements BoatMaintenanceService {
         record.setBoat(boat);
         record.setInspectionDate(dto.getInspectionDate());
         record.setInspectionFindings(dto.getInspectionFindings());
+        record.setInspectedBy(dto.getInspectedBy() == null ? record.getInspectedBy() : dto.getInspectedBy().trim());
         record.setMaintenanceDescription(dto.getMaintenanceDescription());
         record.setMaintenanceStatus(status);
         record.setMaintenanceCost(dto.getMaintenanceCost());
@@ -172,6 +177,7 @@ public class BoatMaintenanceServiceImpl implements BoatMaintenanceService {
         dto.setBoatName(record.getBoat() != null ? record.getBoat().getBoatName() : null);
         dto.setInspectionDate(record.getInspectionDate());
         dto.setInspectionFindings(record.getInspectionFindings());
+        dto.setInspectedBy(record.getInspectedBy());
         dto.setMaintenanceDescription(record.getMaintenanceDescription());
         dto.setMaintenanceStatus(record.getMaintenanceStatus());
         dto.setMaintenanceCost(record.getMaintenanceCost());
