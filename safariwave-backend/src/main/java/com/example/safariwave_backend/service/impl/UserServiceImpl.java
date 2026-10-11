@@ -11,8 +11,8 @@ import com.example.safariwave_backend.repository.RoleRepository;
 import com.example.safariwave_backend.repository.UserRepository;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.UserService;
+import com.example.safariwave_backend.service.factory.UserFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,8 +28,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private RoleRepository roleRepository;
 
+    /** Factory pattern: builds every new User (see service/factory). */
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private UserFactory userFactory;
 
     @Override
     public UserResponseDTO registerUser(UserRegisterDTO dto) {
@@ -38,9 +39,8 @@ public class UserServiceImpl implements UserService {
         }
         Role role = roleRepository.findById(dto.getRoleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + dto.getRoleId()));
-
-        String status = dto.getStatus() == null || dto.getStatus().isBlank() ? "ACTIVE" : dto.getStatus();
-        return createUser(dto, role, status);
+        requireUniqueEmail(dto.getEmail());
+        return toResponseDTO(userRepository.save(userFactory.newAccountWithRole(dto, role)));
     }
 
     @Override
@@ -48,25 +48,14 @@ public class UserServiceImpl implements UserService {
         // Self-registration: the requested roleId/status are ignored so nobody can sign up as staff.
         Role role = roleRepository.findFirstByRoleNameIgnoreCase(Roles.CUSTOMER)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer role is not configured."));
-        return createUser(dto, role, "ACTIVE");
+        requireUniqueEmail(dto.getEmail());
+        return toResponseDTO(userRepository.save(userFactory.newCustomer(dto, role)));
     }
 
-    private UserResponseDTO createUser(UserRegisterDTO dto, Role role, String status) {
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
-            throw new DuplicateResourceException("Email already registered: " + dto.getEmail());
+    private void requireUniqueEmail(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new DuplicateResourceException("Email already registered: " + email);
         }
-
-        User user = new User();
-        user.setRole(role);
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(passwordEncoder.encode(dto.getPassword())); //  now hashed
-        user.setPhone(dto.getPhone());
-        user.setStatus(status);
-
-        User saved = userRepository.save(user);
-        return toResponseDTO(saved);
     }
 
     @Override

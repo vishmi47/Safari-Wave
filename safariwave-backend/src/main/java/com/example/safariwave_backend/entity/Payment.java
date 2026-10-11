@@ -31,6 +31,7 @@ public class Payment {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
     public String getFailureReason() { return failureReason; }
     public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
     public LocalDateTime getCreatedAt() { return createdAt; }

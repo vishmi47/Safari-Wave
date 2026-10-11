@@ -8,6 +8,7 @@ import com.example.safariwave_backend.exception.BadRequestException;
 import com.example.safariwave_backend.exception.DuplicateResourceException;
 import com.example.safariwave_backend.repository.RoleRepository;
 import com.example.safariwave_backend.repository.UserRepository;
+import com.example.safariwave_backend.service.factory.UserFactory;
 import com.example.safariwave_backend.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -44,6 +46,9 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Real factory on top of the mocked password encoder
+        ReflectionTestUtils.setField(userService, "userFactory", new UserFactory(passwordEncoder));
+
         dto = new UserRegisterDTO();
         dto.setFirstName("Nimal");
         dto.setLastName("Perera");

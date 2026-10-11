@@ -4,7 +4,6 @@ import com.example.safariwave_backend.dto.request.BookingRequestDTO;
 import com.example.safariwave_backend.dto.response.BookingResponseDTO;
 import com.example.safariwave_backend.entity.Booking;
 import com.example.safariwave_backend.entity.Boat;
-import com.example.safariwave_backend.entity.Promotion;
 import com.example.safariwave_backend.entity.SafariPackage;
 import com.example.safariwave_backend.entity.SafariTrip;
 import com.example.safariwave_backend.entity.User;
@@ -14,13 +13,13 @@ import com.example.safariwave_backend.exception.ResourceNotFoundException;
 import com.example.safariwave_backend.repository.BookingRepository;
 import com.example.safariwave_backend.repository.CustomerExperienceRepository;
 import com.example.safariwave_backend.repository.PaymentRepository;
-import com.example.safariwave_backend.repository.PromotionRepository;
 import com.example.safariwave_backend.repository.SafariTripRepository;
 import com.example.safariwave_backend.repository.UserRepository;
 import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.BookingService;
 import com.example.safariwave_backend.service.NotificationService;
+import com.example.safariwave_backend.service.pricing.PricingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -36,7 +35,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -80,8 +78,9 @@ public class BookingServiceImpl implements BookingService {
     @Autowired
     private SafariTripRepository safariTripRepository;
 
+    /** Strategy pattern context: works out discounts and totals (see service/pricing). */
     @Autowired
-    private PromotionRepository promotionRepository;
+    private PricingService pricingService;
 
     @Autowired
     private PaymentRepository paymentRepository;
@@ -435,14 +434,8 @@ public class BookingServiceImpl implements BookingService {
     // ---- pricing (spec B.3: bookings keep the price and discount from the moment of booking) ----
 
     private void snapshotPrice(Booking booking, SafariPackage safariPackage) {
-        BigDecimal discount = promotionRepository.findPublishedForPackageOn(safariPackage.getPackageId(), LocalDate.now())
-                .stream()
-                .map(Promotion::getDiscountPercentage)
-                .filter(Objects::nonNull)
-                .max(BigDecimal::compareTo)
-                .orElse(BigDecimal.ZERO);
         booking.setUnitPrice(safariPackage.getBasePrice());
-        booking.setDiscountPercentage(discount);
+        booking.setDiscountPercentage(pricingService.bestDiscount(safariPackage, LocalDate.now()));
     }
 
     /** Bookings made before price snapshots existed: derive the unit price from the stored total. */
@@ -455,12 +448,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private BigDecimal calculateTotal(Booking booking) {
-        BigDecimal discount = booking.getDiscountPercentage() == null ? BigDecimal.ZERO : booking.getDiscountPercentage();
-        BigDecimal multiplier = BigDecimal.valueOf(100).subtract(discount).divide(BigDecimal.valueOf(100));
-        return booking.getUnitPrice()
-                .multiply(BigDecimal.valueOf(booking.getNumberOfPeople()))
-                .multiply(multiplier)
-                .setScale(2, RoundingMode.HALF_UP);
+        return pricingService.total(booking.getUnitPrice(), booking.getNumberOfPeople(), booking.getDiscountPercentage());
     }
 
     // ---- small helpers ----

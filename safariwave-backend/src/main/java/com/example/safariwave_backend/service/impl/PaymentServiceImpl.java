@@ -12,6 +12,9 @@ import com.example.safariwave_backend.service.NotificationService;
 import com.example.safariwave_backend.security.CurrentUser;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.PaymentService;
+import com.example.safariwave_backend.service.payment.PaymentContext;
+import com.example.safariwave_backend.service.payment.PaymentOutcome;
+import com.example.safariwave_backend.service.payment.PaymentStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +23,9 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final NotificationService notificationService;
-    public PaymentServiceImpl(PaymentRepository paymentRepository, BookingRepository bookingRepository, NotificationService notificationService) {
-        this.paymentRepository = paymentRepository; this.bookingRepository = bookingRepository; this.notificationService = notificationService;
+    private final PaymentContext paymentContext;
+    public PaymentServiceImpl(PaymentRepository paymentRepository, BookingRepository bookingRepository, NotificationService notificationService, PaymentContext paymentContext) {
+        this.paymentRepository = paymentRepository; this.bookingRepository = bookingRepository; this.notificationService = notificationService; this.paymentContext = paymentContext;
     }
     public PaymentResponseDTO processMockPayment(Integer bookingId, PaymentRequestDTO request) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
@@ -29,12 +33,13 @@ public class PaymentServiceImpl implements PaymentService {
         CurrentUser.requireOwnerOrAnyRole(booking.getCustomer().getUserId(), Roles.CUSTOMER_RELATIONS, Roles.FINANCE);
         if (!"PENDING".equals(booking.getBookingStatus())) throw new BadRequestException("Only pending bookings can be paid");
         if (paymentRepository.findByBooking_BookingId(bookingId).isPresent()) throw new BadRequestException("A payment already exists for this booking");
-        String outcome = request.getOutcome().trim().toUpperCase();
-        if (!java.util.List.of("SUCCESS", "FAILED").contains(outcome)) throw new BadRequestException("Mock outcome must be SUCCESS or FAILED");
-        Payment payment = new Payment(); payment.setBooking(booking); payment.setAmount(booking.getTotalPrice()); payment.setStatus(outcome); payment.setFailureReason("FAILED".equals(outcome) ? "Mock payment declined" : null);
-        booking.setPaymentStatus(outcome); booking.setBookingStatus("SUCCESS".equals(outcome) ? "CONFIRMED" : "PENDING");
+        // Strategy pattern: the requested method (CARD / CASH) decides how the payment is taken
+        PaymentStrategy strategy = paymentContext.strategyFor(request.getMethod());
+        PaymentOutcome outcome = strategy.pay(booking, request);
+        Payment payment = new Payment(); payment.setBooking(booking); payment.setAmount(booking.getTotalPrice()); payment.setStatus(outcome.status()); payment.setProvider(strategy.provider()); payment.setFailureReason(outcome.failureReason());
+        booking.setPaymentStatus(outcome.status()); booking.setBookingStatus(outcome.succeeded() ? "CONFIRMED" : "PENDING");
         Booking savedBooking = bookingRepository.save(booking);
-        notificationService.create(savedBooking.getCustomer().getUserId(), "PAYMENT_" + outcome, "Mock payment " + outcome.toLowerCase() + " for booking " + bookingId);
+        notificationService.create(savedBooking.getCustomer().getUserId(), "PAYMENT_" + outcome.status(), "Payment " + outcome.status().toLowerCase() + " for booking " + bookingId + " (" + strategy.provider() + ")");
         return toDto(paymentRepository.save(payment));
     }
     @Transactional(readOnly = true)

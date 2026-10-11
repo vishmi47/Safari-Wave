@@ -1,10 +1,14 @@
 package com.example.safariwave_backend.api;
 
 import com.example.safariwave_backend.security.Roles;
+import com.example.safariwave_backend.entity.SafariTrip;
+import com.example.safariwave_backend.repository.SafariTripRepository;
 import com.jayway.jsonpath.JsonPath;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -12,6 +16,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** Customer Experience endpoints across roles (spec 6.5 / B.3). */
 class CustomerExperienceApiTest extends ApiTestSupport {
+
+    @Autowired
+    private SafariTripRepository safariTripRepository;
 
     @Test
     void complaintAndRatingLifecycle() throws Exception {
@@ -77,5 +84,44 @@ class CustomerExperienceApiTest extends ApiTestSupport {
         mockMvc.perform(as(customer, post("/api/loyalty/customers/" + customer.id() + "/points?value=500"))).andExpect(status().isForbidden());
         mockMvc.perform(as(relations, post("/api/loyalty/customers/" + customer.id() + "/points?value=500")))
                 .andExpect(jsonPath("$.points").value(500));
+    }
+
+    @Test
+    void endedTripIsCompletedAutomaticallyAndAllowsFeedback() throws Exception {
+        TestUser ops = createUser(Roles.OPERATIONS);
+        TestUser customer = createUser(Roles.CUSTOMER);
+        Integer packageId = createPackage("1000.00", 10).getPackageId();
+        Integer boatId = createBoat(10, "OPERATIONAL").getBoatId();
+        String trip = mockMvc.perform(as(ops, post("/api/trips")).content("""
+                        {"packageId": %d, "boatId": %d, "tripDate": "%s", "startTime": "09:00", "endTime": "11:00", "capacity": 8, "status": "SCHEDULED"}
+                        """.formatted(packageId, boatId, LocalDate.now().plusDays(2))))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer tripId = JsonPath.read(trip, "$.tripId");
+        String booking = mockMvc.perform(as(customer, post("/api/bookings"))
+                        .content("{\"tripId\": %d, \"numberOfPeople\": 2}".formatted(tripId)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        Integer bookingId = JsonPath.read(booking, "$.bookingId");
+        mockMvc.perform(as(customer, post("/api/payments/bookings/" + bookingId + "/mock"))
+                        .content("{\"outcome\": \"SUCCESS\"}"))
+                .andExpect(status().isOk());
+
+        SafariTrip scheduledTrip = safariTripRepository.findById(tripId).orElseThrow();
+        scheduledTrip.setTripDate(LocalDate.now());
+        scheduledTrip.setStartTime(LocalTime.of(8, 0));
+        scheduledTrip.setEndTime(LocalTime.of(9, 0));
+        safariTripRepository.saveAndFlush(scheduledTrip);
+
+        mockMvc.perform(as(customer, get("/api/trips")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
+        mockMvc.perform(as(customer, get("/api/bookings/" + bookingId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bookingStatus").value("COMPLETED"));
+        mockMvc.perform(as(customer, post("/api/customer-experiences")).content("""
+                        {"experienceType": "RATING", "subject": "Great trip", "description": "Wonderful day", "bookingId": %d, "rating": 5}
+                        """.formatted(bookingId)))
+                .andExpect(status().isCreated());
     }
 }

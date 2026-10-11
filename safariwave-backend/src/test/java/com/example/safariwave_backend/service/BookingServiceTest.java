@@ -21,6 +21,9 @@ import com.example.safariwave_backend.repository.UserRepository;
 import com.example.safariwave_backend.security.AuthenticatedUser;
 import com.example.safariwave_backend.security.Roles;
 import com.example.safariwave_backend.service.impl.BookingServiceImpl;
+import com.example.safariwave_backend.service.pricing.NoDiscountStrategy;
+import com.example.safariwave_backend.service.pricing.PricingService;
+import com.example.safariwave_backend.service.pricing.PromotionDiscountStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -81,6 +85,10 @@ class BookingServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Real pricing strategies on top of the mocked promotion repository
+        ReflectionTestUtils.setField(bookingService, "pricingService", new PricingService(
+                List.of(new PromotionDiscountStrategy(promotionRepository), new NoDiscountStrategy())));
+
         Role customerRole = new Role();
         customerRole.setRoleName(Roles.CUSTOMER);
         customer = new User();

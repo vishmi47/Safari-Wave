@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -119,12 +120,28 @@ public class SafariTripServiceImpl implements SafariTripService {
     }
 
     @Override
+    @Transactional
     public List<SafariTripResponseDTO> getAllTrips() {
         CurrentUser.get();
+        completeEndedTrips();
         return safariTripRepository.findAll()
                 .stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Scheduled(fixedDelayString = "${safariwave.trips.completion-check-ms:60000}")
+    @Transactional
+    public void completeEndedTrips() {
+        LocalDateTime now = LocalDateTime.now();
+        safariTripRepository.findByStatusInAndTripDateLessThanEqual(List.of(SCHEDULED, IN_PROGRESS), now.toLocalDate())
+                .stream()
+                .filter(trip -> trip.getEndTime() != null
+                        && !LocalDateTime.of(trip.getTripDate(), trip.getEndTime()).isAfter(now))
+                .forEach(trip -> {
+                    applyStatus(trip, COMPLETED, null);
+                    safariTripRepository.save(trip);
+                });
     }
 
     @Override

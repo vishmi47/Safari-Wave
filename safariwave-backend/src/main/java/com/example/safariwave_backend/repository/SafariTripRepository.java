@@ -15,6 +15,8 @@ public interface SafariTripRepository extends JpaRepository<SafariTrip, Integer>
     // Trips assigned to a guide
     List<SafariTrip> findByGuide_UserIdOrderByTripDateAsc(Integer guideId);
 
+    List<SafariTrip> findByStatusInAndTripDateLessThanEqual(List<String> statuses, LocalDate tripDate);
+
     boolean existsByBoat_BoatId(Integer boatId);
 
     // Upcoming trips that still need their boat (used before retiring a boat or lowering its capacity)

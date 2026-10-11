@@ -48,8 +48,6 @@ public class SecurityFilterConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         // /api/promotions/**: any logged-in user; per-role rules live in PromotionServiceImpl
                         // /api/packages/**: any logged-in user; per-role rules live in SafariPackageServiceImpl
-                        // Legacy vendor API (deprecated, see Vendor.java): admin only
-                        .requestMatchers("/api/vendors/**").hasAnyRole("ADMIN", "GENERAL_MANAGER")
                         // /api/partners-vendors/**: writes are ADMIN only; reads are filtered by role in PartnerVendorServiceImpl
                         // /api/weather-alerts, /api/safety-inspections, /api/emergency-incidents: per-role rules live in the safety services
                         .requestMatchers("/api/notifications/**").authenticated()
